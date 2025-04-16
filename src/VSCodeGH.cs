@@ -13,19 +13,29 @@ namespace VSCodeGH
 {
     /// <summary>
     /// VSCode-Grasshopper連携プラグイン
-    /// WebSocketを使用してVSCodeとGrasshopperのスクリプトコンポーネントを同期
+    /// - WebSocketを使用してVSCodeとGrasshopperのスクリプトコンポーネントを同期
+    /// - ポート8080でVSCodeクライアントからの接続を待機
+    /// - スクリプトの双方向同期を実現
     /// </summary>
     public class VSCodeGH : GH_AssemblyPriority
     {
+        // WebSocketサーバーのインスタンス
         private static WebSocketServer _server;
+        // WebSocketサーバーが使用するポート番号
         private const int PORT = 8080;
 
+        /// <summary>
+        /// プラグインのロード時に呼び出されるメソッド
+        /// - WebSocketサーバーの起動
+        /// - シャットダウン時のクリーンアップ処理の登録
+        /// </summary>
         public override GH_LoadingInstruction PriorityLoad()
         {
             StartWebSocketServer();
             RhinoApp.WriteLine($"VSCode-Grasshopper Integration Plugin loaded on port {PORT}");
 
             // アプリケーション終了時のクリーンアップ処理を登録
+            // WebSocketサーバーの適切な終了を保証
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
                 if (_server != null)
@@ -40,6 +50,8 @@ namespace VSCodeGH
 
         /// <summary>
         /// WebSocketサーバーを起動し、クライアントからの接続を待機
+        /// - localhost:8080でリッスン
+        /// - VSCodeGHServiceをWebSocketハンドラとして登録
         /// </summary>
         private static void StartWebSocketServer()
         {
@@ -59,17 +71,32 @@ namespace VSCodeGH
 
     /// <summary>
     /// WebSocketサービスの実装
-    /// VSCodeとの通信を処理
+    /// - VSCodeクライアントとの通信を処理
+    /// - メッセージの受信と適切なハンドリング
+    /// - スクリプトコンポーネントの更新処理
+    /// - エラー通知の管理
     /// </summary>
     public class VSCodeGHService : WebSocketBehavior
     {
+        /// <summary>
+        /// WebSocketメッセージ受信時の処理
+        /// メッセージフォーマット：
+        /// {
+        ///   "type": "setScript",
+        ///   "target": "コンポーネントのGUID",
+        ///   "code": "更新するスクリプト内容",
+        ///   "language": "csharp"
+        /// }
+        /// </summary>
         protected override void OnMessage(MessageEventArgs e)
         {
             try
             {
+                // 受信したJSONメッセージをパース
                 var message = JsonConvert.DeserializeObject<JObject>(e.Data);
                 var messageType = message["type"]?.ToString();
 
+                // メッセージタイプに応じた処理を実行
                 switch (messageType)
                 {
                     case "setScript":
@@ -89,19 +116,25 @@ namespace VSCodeGH
 
         /// <summary>
         /// スクリプト更新メッセージの処理
+        /// - メッセージからスクリプト情報を抽出
+        /// - UIスレッドでスクリプトコンポーネントを更新
         /// </summary>
+        /// <param name="message">受信したJSONメッセージ</param>
         private void HandleSetScript(JObject message)
         {
+            // メッセージからパラメータを抽出
             var targetGuid = message["target"]?.ToString();
             var code = message["code"]?.ToString();
             var language = message["language"]?.ToString();
 
+            // スクリプト内容の検証
             if (string.IsNullOrEmpty(code))
             {
                 SendError("Code content is empty");
                 return;
             }
 
+            // UIスレッドでの更新処理
             RhinoApp.InvokeOnUiThread((Action)(() =>
             {
                 try
@@ -117,9 +150,15 @@ namespace VSCodeGH
 
         /// <summary>
         /// スクリプトコンポーネントの更新
+        /// - アクティブなGrasshopperドキュメントからコンポーネントを検索
+        /// - 該当コンポーネントのスクリプトを更新
+        /// - コンポーネントの再計算を実行
         /// </summary>
+        /// <param name="targetGuid">更新対象のコンポーネントGUID（空の場合は全コンポーネントが対象）</param>
+        /// <param name="code">更新するスクリプト内容</param>
         private void UpdateScriptComponent(string targetGuid, string code)
         {
+            // アクティブなGrasshopperドキュメントの取得
             var ghCanvas = Instances.ActiveCanvas;
             if (ghCanvas?.Document == null)
             {
@@ -128,18 +167,20 @@ namespace VSCodeGH
             }
 
             var updated = false;
+            // ドキュメント内のすべてのコンポーネントを走査
             foreach (var obj in ghCanvas.Document.Objects)
             {
-                // GUIDが指定されている場合は一致するもののみ処理
+                // GUIDによるフィルタリング
                 if (!string.IsNullOrEmpty(targetGuid) && obj.InstanceGuid.ToString() != targetGuid)
                     continue;
 
+                // スクリプトコンポーネントの種類を判定
                 var typeFullName = obj.GetType().FullName;
                 if (typeFullName.Contains("ScriptComponent") || typeFullName.Contains("CSharpComponent"))
                 {
                     try
                     {
-                        // SetSourceメソッドを試行
+                        // SetSourceメソッドによる更新を試行
                         var setSourceMethod = obj.GetType().GetMethod("SetSource");
                         if (setSourceMethod != null)
                         {
@@ -147,7 +188,7 @@ namespace VSCodeGH
                         }
                         else
                         {
-                            // Textプロパティを試行
+                            // Textプロパティによる更新を試行
                             var textProperty = obj.GetType().GetProperty("Text");
                             if (textProperty?.CanWrite == true)
                             {
@@ -159,11 +200,12 @@ namespace VSCodeGH
                             }
                         }
 
-                        // コンポーネントの再計算
+                        // コンポーネントの再計算とレイアウト更新
                         obj.Attributes.ExpireLayout();
                         obj.ExpireSolution(true);
                         updated = true;
 
+                        // 更新成功の通知
                         Send(JsonConvert.SerializeObject(new
                         {
                             type = "scriptUpdated",
@@ -178,6 +220,7 @@ namespace VSCodeGH
                 }
             }
 
+            // 更新対象が見つからなかった場合
             if (!updated)
             {
                 SendError($"No matching script component found{(string.IsNullOrEmpty(targetGuid) ? "" : $" for GUID: {targetGuid}")}");
@@ -186,6 +229,7 @@ namespace VSCodeGH
 
         /// <summary>
         /// エラーメッセージの送信
+        /// - クライアントへのエラー通知
         /// </summary>
         private void SendError(string message)
         {
@@ -196,16 +240,25 @@ namespace VSCodeGH
             }));
         }
 
+        /// <summary>
+        /// WebSocket接続確立時の処理
+        /// </summary>
         protected override void OnOpen()
         {
             RhinoApp.WriteLine("VSCode client connected");
         }
 
+        /// <summary>
+        /// WebSocket接続切断時の処理
+        /// </summary>
         protected override void OnClose(CloseEventArgs e)
         {
             RhinoApp.WriteLine("VSCode client disconnected");
         }
 
+        /// <summary>
+        /// WebSocketエラー発生時の処理
+        /// </summary>
         protected override void OnError(WebSocketSharp.ErrorEventArgs e)
         {
             RhinoApp.WriteLine($"WebSocket error: {e.Message}");
