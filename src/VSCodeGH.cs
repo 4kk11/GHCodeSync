@@ -2,148 +2,213 @@ using System;
 using System.IO;
 using System.Linq;
 using Rhino;
-using Rhino.Commands;
 using Grasshopper;
 using Grasshopper.Kernel;
-using Rhino.PlugIns;
+using WebSocketSharp;
+using WebSocketSharp.Server;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace VSCodeGH
 {
+    /// <summary>
+    /// VSCode-Grasshopper連携プラグイン
+    /// WebSocketを使用してVSCodeとGrasshopperのスクリプトコンポーネントを同期
+    /// </summary>
     public class VSCodeGH : GH_AssemblyPriority
     {
+        private static WebSocketServer _server;
+        private const int PORT = 8080;
 
-        private static FileSystemWatcher _watcher;
-
-        // 編集したいファイル（VSCode側で編集しているパスを指定）
-        // private static string _scriptFilePath = @"C:\YOURFOLDER\myscript.py"; // Pyの場合
-        private static string _scriptFilePath = @"/Users/akihito/Desktop/test/test.cs"; // C#の場合
-
-        // ScriptComponent の NickNameや GUID、あるいはインデックス（複数の場合は工夫してください）
-        private static string _targetComponentName = "Hoge";
         public override GH_LoadingInstruction PriorityLoad()
         {
-            SetWatcher();
-            RhinoApp.WriteLine("VSCode Script Sync Plugin loaded and watcher started.");
+            StartWebSocketServer();
+            RhinoApp.WriteLine($"VSCode-Grasshopper Integration Plugin loaded on port {PORT}");
+
+            // アプリケーション終了時のクリーンアップ処理を登録
+            AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
+            {
+                if (_server != null)
+                {
+                    _server.Stop();
+                    RhinoApp.WriteLine("VSCode-Grasshopper Integration Plugin: WebSocket server stopped");
+                }
+            };
 
             return GH_LoadingInstruction.Proceed;
         }
 
-        // protected override void OnShutdown()
-        // {
-        //     if (_watcher != null)
-        //     {
-        //         _watcher.EnableRaisingEvents = false;
-        //         _watcher.Dispose();
-        //     }
-        // }
-
-        private static void SetWatcher()
-        {
-            if (!File.Exists(_scriptFilePath))
-            {
-                File.WriteAllText(_scriptFilePath, "# Start typing your GH script here.");
-            }
-
-            var dir = Path.GetDirectoryName(_scriptFilePath);
-            var filename = Path.GetFileName(_scriptFilePath);
-
-            _watcher = new FileSystemWatcher(dir, filename)
-            {
-                NotifyFilter = NotifyFilters.LastWrite,
-                EnableRaisingEvents = true
-            };
-            _watcher.Changed += (s, e) =>
-            {
-                // ファイル更新直後は読み込みロック等でタイミングが合わないこともあるので、少しリトライ
-                RhinoApp.InvokeOnUiThread((Action)(() =>
-                {
-                    TryUpdateScriptComponentFromFile();
-                }));
-            };
-        }
-
-        // ScriptComponent or CSharpComponent にスクリプトをセット
-        private static void TryUpdateScriptComponentFromFile()
+        /// <summary>
+        /// WebSocketサーバーを起動し、クライアントからの接続を待機
+        /// </summary>
+        private static void StartWebSocketServer()
         {
             try
             {
-                string code = null;
+                _server = new WebSocketServer($"ws://localhost:{PORT}");
+                _server.AddWebSocketService<VSCodeGHService>("/");
+                _server.Start();
+                RhinoApp.WriteLine($"WebSocket server started on ws://localhost:{PORT}");
+            }
+            catch (Exception ex)
+            {
+                RhinoApp.WriteLine($"Error starting WebSocket server: {ex.Message}");
+            }
+        }
+    }
 
-                // ファイルロック問題への簡易対応
-                int retry = 0;
-                while (retry < 3)
+    /// <summary>
+    /// WebSocketサービスの実装
+    /// VSCodeとの通信を処理
+    /// </summary>
+    public class VSCodeGHService : WebSocketBehavior
+    {
+        protected override void OnMessage(MessageEventArgs e)
+        {
+            try
+            {
+                var message = JsonConvert.DeserializeObject<JObject>(e.Data);
+                var messageType = message["type"]?.ToString();
+
+                switch (messageType)
                 {
-                    try
-                    {
-                        code = File.ReadAllText(_scriptFilePath);
+                    case "setScript":
+                        HandleSetScript(message);
                         break;
-                    }
-                    catch
-                    {
-                        System.Threading.Thread.Sleep(50);
-                        retry++;
-                    }
-                }
-
-                if (code == null)
-                    return;
-
-                // GHが開いているか
-                var ghCanvas = Instances.ActiveCanvas;
-                if (ghCanvas == null || ghCanvas.Document == null)
-                {
-                    RhinoApp.WriteLine("[VSCodeSync] No active GH document.");
-                    return;
-                }
-
-                // スクリプトコンポーネントをすべて取得（特定のNickNameまたはインデックスで識別も可）
-                int updated = 0;
-                foreach (var obj in ghCanvas.Document.Objects)
-                {
-                    var typeFullName = obj.GetType().FullName;
-                    // ScriptComponentの判定。
-                    if (typeFullName == "RhinoCodePluginGH.Components.ScriptComponent"
-                     || typeFullName == "RhinoCodePluginGH.Components.CSharpComponent"
-                     // 必要なら他にも
-                     )
-                    {
-                        // NickNameで限定したい場合
-                        if (!string.IsNullOrEmpty(_targetComponentName) && obj.NickName != _targetComponentName) continue;
-                        var mi = obj.GetType().GetMethod("SetSource");
-                        if (mi != null)
-                        {
-                            mi.Invoke(obj, new object[] { code });
-                            obj.Attributes.ExpireLayout(); // レイアウト再描画
-                            obj.ExpireSolution(true);
-                            updated++;
-                            RhinoApp.WriteLine($"[VSCodeSync] Updated GH ScriptComponent: {obj.NickName}");
-                        }
-                        else
-                        {
-                            // .Text プロパティを使う場合（CSharpComponentなど）
-                            var pi = obj.GetType().GetProperty("Text");
-                            if (pi != null && pi.CanWrite)
-                            {
-                                pi.SetValue(obj, code, null);
-                                obj.Attributes.ExpireLayout();
-                                obj.ExpireSolution(true);
-                                updated++;
-                                RhinoApp.WriteLine($"[VSCodeSync] Updated GH ScriptComponent (Text): {obj.NickName}");
-                            }
-                        }
-                    }
-                }
-                if (updated == 0)
-                {
-                    RhinoApp.WriteLine("[VSCodeSync] No GH ScriptComponent found to update.");
+                    default:
+                        RhinoApp.WriteLine($"Unknown message type: {messageType}");
+                        break;
                 }
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine("[VSCodeSync] Error: " + ex.Message);
+                RhinoApp.WriteLine($"Error handling message: {ex.Message}");
+                SendError($"Failed to process message: {ex.Message}");
             }
         }
 
-    }
+        /// <summary>
+        /// スクリプト更新メッセージの処理
+        /// </summary>
+        private void HandleSetScript(JObject message)
+        {
+            var targetGuid = message["target"]?.ToString();
+            var code = message["code"]?.ToString();
+            var language = message["language"]?.ToString();
 
+            if (string.IsNullOrEmpty(code))
+            {
+                SendError("Code content is empty");
+                return;
+            }
+
+            RhinoApp.InvokeOnUiThread((Action)(() =>
+            {
+                try
+                {
+                    UpdateScriptComponent(targetGuid, code);
+                }
+                catch (Exception ex)
+                {
+                    SendError($"Failed to update script: {ex.Message}");
+                }
+            }));
+        }
+
+        /// <summary>
+        /// スクリプトコンポーネントの更新
+        /// </summary>
+        private void UpdateScriptComponent(string targetGuid, string code)
+        {
+            var ghCanvas = Instances.ActiveCanvas;
+            if (ghCanvas?.Document == null)
+            {
+                SendError("No active Grasshopper document");
+                return;
+            }
+
+            var updated = false;
+            foreach (var obj in ghCanvas.Document.Objects)
+            {
+                // GUIDが指定されている場合は一致するもののみ処理
+                if (!string.IsNullOrEmpty(targetGuid) && obj.InstanceGuid.ToString() != targetGuid)
+                    continue;
+
+                var typeFullName = obj.GetType().FullName;
+                if (typeFullName.Contains("ScriptComponent") || typeFullName.Contains("CSharpComponent"))
+                {
+                    try
+                    {
+                        // SetSourceメソッドを試行
+                        var setSourceMethod = obj.GetType().GetMethod("SetSource");
+                        if (setSourceMethod != null)
+                        {
+                            setSourceMethod.Invoke(obj, new object[] { code });
+                        }
+                        else
+                        {
+                            // Textプロパティを試行
+                            var textProperty = obj.GetType().GetProperty("Text");
+                            if (textProperty?.CanWrite == true)
+                            {
+                                textProperty.SetValue(obj, code, null);
+                            }
+                            else
+                            {
+                                continue; // このコンポーネントは更新できない
+                            }
+                        }
+
+                        // コンポーネントの再計算
+                        obj.Attributes.ExpireLayout();
+                        obj.ExpireSolution(true);
+                        updated = true;
+
+                        Send(JsonConvert.SerializeObject(new
+                        {
+                            type = "scriptUpdated",
+                            target = obj.InstanceGuid.ToString(),
+                            status = "success"
+                        }));
+                    }
+                    catch (Exception ex)
+                    {
+                        SendError($"Failed to update component {obj.InstanceGuid}: {ex.Message}");
+                    }
+                }
+            }
+
+            if (!updated)
+            {
+                SendError($"No matching script component found{(string.IsNullOrEmpty(targetGuid) ? "" : $" for GUID: {targetGuid}")}");
+            }
+        }
+
+        /// <summary>
+        /// エラーメッセージの送信
+        /// </summary>
+        private void SendError(string message)
+        {
+            Send(JsonConvert.SerializeObject(new
+            {
+                type = "error",
+                message = message
+            }));
+        }
+
+        protected override void OnOpen()
+        {
+            RhinoApp.WriteLine("VSCode client connected");
+        }
+
+        protected override void OnClose(CloseEventArgs e)
+        {
+            RhinoApp.WriteLine("VSCode client disconnected");
+        }
+
+        protected override void OnError(WebSocketSharp.ErrorEventArgs e)
+        {
+            RhinoApp.WriteLine($"WebSocket error: {e.Message}");
+        }
+    }
 }

@@ -16,14 +16,16 @@
   
   <PropertyGroup>
     <!-- Specifies information for Assembly and Yak -->
-    <Version>1.0</Version>
-    <Title>VSCodeGH</Title>
+    <Version>0.0.1</Version>
+    <Title>VSCode Grasshopper Integration</Title>
     <Company>VSCodeGH Authors</Company>
-    <Description>Description of VSCodeGH</Description>
+    <Description>VSCode と Grasshopper のスクリプトコンポーネントを連携するためのプラグイン</Description>
   </PropertyGroup>
   
   <ItemGroup>
     <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
+    <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   
   <!-- For Windows only builds -->
