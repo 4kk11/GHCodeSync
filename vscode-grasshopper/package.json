@@ -1,0 +1,47 @@
+{
+    "name": "vscode-grasshopper",
+    "displayName": "VSCode Grasshopper",
+    "description": "VSCode extension for Grasshopper script component integration",
+    "version": "0.0.1",
+    "engines": {
+        "vscode": "^1.70.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onCommand:vscode-grasshopper.connect",
+        "onCommand:vscode-grasshopper.disconnect"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "commands": [
+            {
+                "command": "vscode-grasshopper.connect",
+                "title": "Connect to Grasshopper"
+            },
+            {
+                "command": "vscode-grasshopper.disconnect",
+                "title": "Disconnect from Grasshopper"
+            }
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "^16.x.x",
+        "@types/vscode": "^1.70.0",
+        "@types/ws": "^8.x.x",
+        "typescript": "^4.x.x",
+        "ws": "^8.x.x"
+    },
+    "publisher": "vscode-grasshopper",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/vscode-grasshopper.git"
+    }
+}
