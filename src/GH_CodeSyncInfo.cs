@@ -3,9 +3,9 @@ using System.Drawing;
 using Grasshopper;
 using Grasshopper.Kernel;
 
-namespace VSCodeGH
+namespace GH_CodeSync
 {
-    public class VSCodeGHInfo : GH_AssemblyInfo
+    public class GH_CodeSyncInfo : GH_AssemblyInfo
     {
         public override string Name => "VSCode Grasshopper Integration";
 
@@ -21,7 +21,7 @@ namespace VSCodeGH
         public override Guid Id => new Guid("810aa6cf-cbff-4d78-bfed-5f899334ef72");
 
         //Return a string identifying you or your company.
-        public override string AuthorName => "VSCodeGH Authors";
+        public override string AuthorName => "GH_CodeSync Authors";
 
         //Return a string representing your preferred contact details.
         public override string AuthorContact => "https://github.com/yourusername/vscode-grasshopper";

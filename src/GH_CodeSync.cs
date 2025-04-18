@@ -9,7 +9,7 @@ using WebSocketSharp.Server;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace VSCodeGH
+namespace GH_CodeSync
 {
     /// <summary>
     /// VSCode-Grasshopper連携プラグイン
@@ -17,7 +17,7 @@ namespace VSCodeGH
     /// - ポート8080でVSCodeクライアントからの接続を待機
     /// - スクリプトの双方向同期を実現
     /// </summary>
-    public class VSCodeGH : GH_AssemblyPriority
+    public class GH_CodeSync : GH_AssemblyPriority
     {
         // WebSocketサーバーのインスタンス
         private static WebSocketServer _server;
@@ -51,14 +51,14 @@ namespace VSCodeGH
         /// <summary>
         /// WebSocketサーバーを起動し、クライアントからの接続を待機
         /// - localhost:8080でリッスン
-        /// - VSCodeGHServiceをWebSocketハンドラとして登録
+        /// - GH_CodeSyncServiceをWebSocketハンドラとして登録
         /// </summary>
         private static void StartWebSocketServer()
         {
             try
             {
                 _server = new WebSocketServer($"ws://localhost:{PORT}");
-                _server.AddWebSocketService<VSCodeGHService>("/");
+                _server.AddWebSocketService<GH_CodeSyncService>("/");
                 _server.Start();
                 RhinoApp.WriteLine($"WebSocket server started on ws://localhost:{PORT}");
             }
@@ -76,7 +76,7 @@ namespace VSCodeGH
     /// - スクリプトコンポーネントの更新処理
     /// - エラー通知の管理
     /// </summary>
-    public class VSCodeGHService : WebSocketBehavior
+    public class GH_CodeSyncService : WebSocketBehavior
     {
         /// <summary>
         /// WebSocketメッセージ受信時の処理

@@ -5,12 +5,12 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino.Geometry;
 
-namespace VSCodeGH
+namespace GH_CodeSync
 {
-  public class VSCodeGHComponent : GH_Component
+  public class GH_CodeSyncComponent : GH_Component
   {
-    public VSCodeGHComponent()
-      : base("VSCodeGH Component", "Nickname",
+    public GH_CodeSyncComponent()
+      : base("GH_CodeSync Component", "Nickname",
         "Description of component",
         "Category", "Subcategory")
     {

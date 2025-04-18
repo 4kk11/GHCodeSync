@@ -8,7 +8,7 @@
       "args": [
         "build",
         "-clp:NoSummary",
-        "${workspaceFolder}/VSCodeGH.csproj"
+        "${workspaceFolder}/GH_CodeSync.csproj"
       ],
       "problemMatcher": "$msCompile",
       "presentation": {
