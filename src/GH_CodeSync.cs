@@ -8,6 +8,9 @@ using WebSocketSharp;
 using WebSocketSharp.Server;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Grasshopper.GUI.Canvas;
+using Grasshopper.GUI;
+using System.Windows.Forms;
 
 namespace GH_CodeSync
 {
@@ -23,6 +26,8 @@ namespace GH_CodeSync
         private static WebSocketServer _server;
         // WebSocketサーバーが使用するポート番号
         private const int PORT = 8080;
+
+        private const string BUTTON_NAME = "VSCode Sync";
 
         /// <summary>
         /// プラグインのロード時に呼び出されるメソッド
@@ -45,6 +50,9 @@ namespace GH_CodeSync
                 }
             };
 
+            // Grasshopperのキャンバス作成イベントにハンドラを登録
+            Instances.CanvasCreated += Instances_CanvasCreated;
+
             return GH_LoadingInstruction.Proceed;
         }
 
@@ -66,6 +74,123 @@ namespace GH_CodeSync
             {
                 RhinoApp.WriteLine($"Error starting WebSocket server: {ex.Message}");
             }
+        }
+
+        private void Instances_CanvasCreated(GH_Canvas canvas)
+        {
+            Instances.CanvasCreated -= Instances_CanvasCreated;
+
+            // canvas.DocumentObjectMouseDown += Canvas_DocumentObjectMouseDown;
+            canvas.MouseDown += Canvas_MouseDown;
+        }
+
+        private void Canvas_DocumentObjectMouseDown(object sender, GH_CanvasObjectMouseDownEventArgs e)
+        {
+            var typeFullName = e.Object.TopLevelObject.GetType().FullName;
+            if (typeFullName.Contains("ScriptComponent") || typeFullName.Contains("CSharpComponent"))
+            {
+                // スクリプトコンポーネントの追加を検出
+                RhinoApp.WriteLine($"Script component selected: {e.Object.TopLevelObject.Name}");
+                this.TryAddVSCodeSyncButton();
+            }
+        }
+
+        private void Canvas_MouseDown(object sender, MouseEventArgs e)
+        {
+            // マウスクリックイベントの処理
+            if (e.Button == MouseButtons.Left)
+            {
+                var ghdoc = Instances.ActiveCanvas.Document;
+                if (ghdoc == null) return;
+                var selectedObjects = ghdoc.SelectedObjects();
+                if (selectedObjects.Count() == 1 && selectedObjects.First().GetType().FullName.Contains("CSharpComponent"))
+                {
+                    RhinoApp.WriteLine("Added VSCode Sync button");
+                    this.TryAddVSCodeSyncButton();
+                }
+                else
+                {
+                    RhinoApp.WriteLine("Removed VSCode Sync button");
+                    this.TryDeleteVSCodeSyncButton();
+                }
+                RhinoApp.WriteLine($"Selected objects count: {selectedObjects.Count()}");
+            }
+        }
+
+        private bool TryAddVSCodeSyncButton()
+        {
+            // すでにボタンが存在する場合は何もしない
+            if (FindToolStripButton(BUTTON_NAME) != null)
+            {
+                RhinoApp.WriteLine("VSCode Sync button already exists");
+                return false;
+            }
+
+            // GrasshopperのUIにVSCode Syncボタンを追加
+            ToolStrip canvasToolbar = Instances.DocumentEditor.Controls[0].Controls[1] as ToolStrip;
+            if (canvasToolbar != null)
+            {
+                ToolStripButton button = new ToolStripButton(BUTTON_NAME);
+                button.Click += (s, args) =>
+                {
+                    // VSCodeを起動してC#スクリプトコンポーネントと接続
+                    var ghdoc = Instances.ActiveCanvas.Document;
+                    var selectedObjects = ghdoc.SelectedObjects();
+                    if (selectedObjects.Count() == 1 && selectedObjects.First().GetType().FullName.Contains("CSharpComponent"))
+                    {
+                        var component = selectedObjects.First();
+                        var guid = component.InstanceGuid.ToString();
+                        // var code = component.GetType().GetProperty("Text").GetValue(component, null);
+                        var language = "csharp"; // スクリプトの言語を指定
+                        // 一時ファイルを作成
+                        var tempDir = Path.Combine(Path.GetTempPath(), "gh-codesync");
+                        Directory.CreateDirectory(tempDir);
+                        RhinoApp.WriteLine($"Temporary directory created: {tempDir}");
+                        var tempFile = Path.Combine(tempDir, $"{guid}.cs");
+                        File.WriteAllText(tempFile, "// GH_CodeSync temporary file\n");
+                        
+                        // OSに依存しないURLスキーム起動方法
+                        var url = $"vscode://file/{tempFile.Replace(" ", "%20")}?target={guid}&language={language}";
+                        var psi = new System.Diagnostics.ProcessStartInfo
+                        {
+                            FileName = url,
+                            UseShellExecute = true
+                        };
+                        System.Diagnostics.Process.Start(psi);
+                        RhinoApp.WriteLine($"Opening VSCode for component: {component.Name} ({guid})");
+                    }
+                };
+                canvasToolbar.Items.Add(button);
+                RhinoApp.WriteLine("VSCode Sync button added to Grasshopper toolbar");
+                return true;
+            }
+            return false;
+        }
+
+        private bool TryDeleteVSCodeSyncButton()
+        {
+            // GrasshopperのUIからVSCode Syncボタンを削除
+            var button = FindToolStripButton(BUTTON_NAME);
+            if (button != null)
+            {
+                ToolStrip canvasToolbar = Instances.DocumentEditor.Controls[0].Controls[1] as ToolStrip;
+                canvasToolbar.Items.Remove(button);
+                RhinoApp.WriteLine("VSCode Sync button removed from Grasshopper toolbar");
+                return true;
+            }
+            
+            return false;
+        }
+
+        private ToolStripButton FindToolStripButton(string name)
+        {
+            // GrasshopperのUIから指定された名前のToolStripButtonを検索
+            ToolStrip canvasToolbar = Instances.DocumentEditor.Controls[0].Controls[1] as ToolStrip;
+            if (canvasToolbar != null)
+            {
+                return canvasToolbar.Items.OfType<ToolStripButton>().FirstOrDefault(b => b.Text == name);
+            }
+            return null;
         }
     }
 
