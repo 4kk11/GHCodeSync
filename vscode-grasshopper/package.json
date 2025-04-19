@@ -11,7 +11,8 @@
     ],
     "activationEvents": [
         "onCommand:vscode-grasshopper.connect",
-        "onCommand:vscode-grasshopper.disconnect"
+        "onCommand:vscode-grasshopper.disconnect",
+        "onCommand:vscode-grasshopper.healthCheck"
     ],
     "main": "./out/extension.js",
     "contributes": {
@@ -23,7 +24,12 @@
             {
                 "command": "vscode-grasshopper.disconnect",
                 "title": "Disconnect from Grasshopper"
+            },
+            {
+                "command": "vscode-grasshopper.healthCheck",
+                "title": "Health Check"
             }
+
         ]
     },
     "scripts": {

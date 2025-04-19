@@ -11,6 +11,10 @@ const WebSocket = require("ws");
  * - VSCode UI（ステータスバー等）の更新
  */
 class GrasshopperClient {
+    setComponentGuid(filePath, guid) {
+        this.fileGuidMap.set(filePath, guid);
+        vscode.window.showInformationMessage(`ComponentのGUIDを設定しました: ${guid}`);
+    }
     constructor() {
         /** WebSocket接続インスタンス */
         this.socket = null;
@@ -42,12 +46,40 @@ class GrasshopperClient {
      * エディタ変更時の処理
      * @param editor 新しいアクティブエディタ
      */
-    handleEditorChange(editor) {
+    async handleEditorChange(editor) {
         this.currentEditor = editor;
-        if (editor) {
-            // C#ファイルの場合のみGUIDの設定を提案
-            if (editor.document.languageId === 'csharp' && !this.fileGuidMap.has(editor.document.uri.fsPath)) {
-                this.promptForComponentGuid();
+        if (editor && editor.document.languageId === 'csharp') {
+            const filePath = editor.document.uri.fsPath;
+            console.log('File Path:', filePath);
+            // ファイルパスから一時ディレクトリのパスを取得
+            const tempDir = filePath.substring(0, filePath.lastIndexOf('/'));
+            console.log('Temp Dir:', tempDir);
+            try {
+                // connect.cmdファイルを読み込む
+                const connectCmdPath = `${tempDir}/connect.cmd`;
+                const fs = require('fs');
+                if (fs.existsSync(connectCmdPath)) {
+                    const connectCmd = JSON.parse(fs.readFileSync(connectCmdPath, 'utf8'));
+                    console.log('Connect CMD:', connectCmd);
+                    if (connectCmd.guid && !this.fileGuidMap.has(filePath)) {
+                        // GUIDを設定して接続
+                        this.setComponentGuid(filePath, connectCmd.guid);
+                        this.connect();
+                    }
+                }
+                else {
+                    // connect.cmdが見つからない場合は手動設定を提案
+                    if (!this.fileGuidMap.has(filePath)) {
+                        this.promptForComponentGuid();
+                    }
+                }
+            }
+            catch (error) {
+                console.error('Error reading connect.cmd:', error);
+                // エラーの場合は手動設定を提案
+                if (!this.fileGuidMap.has(filePath)) {
+                    this.promptForComponentGuid();
+                }
             }
         }
     }
@@ -194,6 +226,7 @@ let client;
  */
 function activate(context) {
     client = new GrasshopperClient();
+    vscode.window.showInformationMessage('Grasshopper拡張機能がアクティブになりました');
     // エディタの監視を開始
     client.startEditorWatching(context);
     // コマンドの登録
@@ -203,8 +236,12 @@ function activate(context) {
     let disconnectDisposable = vscode.commands.registerCommand('vscode-grasshopper.disconnect', () => {
         client.disconnect();
     });
+    let helthCheckDisposable = vscode.commands.registerCommand('vscode-grasshopper.healthCheck', () => {
+        vscode.window.showInformationMessage('Grasshopperの状態を確認しました!');
+    });
     context.subscriptions.push(connectDisposable);
     context.subscriptions.push(disconnectDisposable);
+    context.subscriptions.push(helthCheckDisposable);
 }
 exports.activate = activate;
 /**

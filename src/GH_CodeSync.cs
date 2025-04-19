@@ -216,7 +216,7 @@ namespace GH_CodeSync
                 // 受信したJSONメッセージをパース
                 var message = JsonConvert.DeserializeObject<JObject>(e.Data);
                 var messageType = message["type"]?.ToString();
-
+                RhinoApp.WriteLine($"Received message: {e.Data}");
                 // メッセージタイプに応じた処理を実行
                 switch (messageType)
                 {
