@@ -118,15 +118,35 @@ namespace GH_CodeSync
                     var selectedObjects = ghdoc.SelectedObjects();
                     if (selectedObjects.Count() == 1 && selectedObjects.First().GetType().FullName.Contains("CSharpComponent"))
                     {
+                        // コンポーネントの情報を取得
                         var component = selectedObjects.First();
                         var guid = component.InstanceGuid.ToString();
-                        // var code = component.GetType().GetProperty("Text").GetValue(component, null);
-                        var language = "csharp"; // スクリプトの言語を指定
-                        // 一時ファイルを作成
+                        var language = "csharp";
+
+                        // TryGetSourceメソッドをリフレクションで呼び出し
+                        var methodInfo = component.GetType().GetMethod("TryGetSource");
+                        string sourceCode = null;
+                        if (methodInfo != null)
+                        {
+                            var parameters = new object[] { null };
+                            var result = (bool)methodInfo.Invoke(component, parameters);
+                            if (result)
+                            {
+                                sourceCode = (string)parameters[0];
+                            }
+                        }
+                        
+                        // 一時ディレクトリ準備
                         var tempDir = Path.Combine(Path.GetTempPath(), "gh-codesync");
                         Directory.CreateDirectory(tempDir);
+                        
+                        // ソースコードを一時ファイルに保存
                         var tempFile = Path.Combine(tempDir, $"{guid}.cs");
-                        File.WriteAllText(tempFile, "// GH_CodeSync temporary file\n");
+                        File.WriteAllText(tempFile, sourceCode ?? "// Empty component");
+
+                        // WebSocket接続用のconnect.cmdファイルを作成
+                        var connectScript = $@"{{""command"": ""vscode-grasshopper.connect"", ""guid"": ""{guid}""}}";
+                        File.WriteAllText(Path.Combine(tempDir, "connect.cmd"), connectScript);
                         
                         // OSに依存しないURLスキーム起動方法
                         var url = $"vscode://file/{tempFile.Replace(" ", "%20")}?target={guid}&language={language}";
