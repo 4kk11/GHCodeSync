@@ -11,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using Grasshopper.GUI.Canvas;
 using Grasshopper.GUI;
 using System.Windows.Forms;
+using System.Reflection;
 
 namespace GH_CodeSync
 {
@@ -301,6 +302,17 @@ namespace GH_CodeSync
                 {
                     try
                     {
+
+                        var ctxField = obj.GetType()
+                                        .GetField("Context",
+                                                    BindingFlags.Instance | BindingFlags.NonPublic);
+
+                        object ctx = ctxField.GetValue(obj);   // 型は ScriptContext の派生
+                        var prop   = ctx.GetType().GetProperty("EnforceParamsOnCreate",
+                                                            BindingFlags.Instance | BindingFlags.Public);
+
+                        prop.SetValue(ctx, false);             // true / false をセット
+
                         // SetSourceメソッドによる更新を試行
                         var setSourceMethod = obj.GetType().GetMethod("SetSource");
                         if (setSourceMethod != null)
@@ -321,10 +333,14 @@ namespace GH_CodeSync
                             }
                         }
 
+                        var setParamsFromScript = obj.GetType().GetMethod("SetParametersFromScript");
+                        setParamsFromScript.Invoke(obj, null);
+
                         // コンポーネントの再計算とレイアウト更新
                         obj.Attributes.ExpireLayout();
                         obj.ExpireSolution(true);
                         updated = true;
+                        prop.SetValue(ctx, true); 
 
                         // 更新成功の通知
                         Send(JsonConvert.SerializeObject(new
