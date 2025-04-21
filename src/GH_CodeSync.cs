@@ -33,22 +33,22 @@ namespace GH_CodeSyncce
 
 
         private static readonly string HiddenMembersRegion = @"
-            #region HiddenMembers
-                RhinoDoc RhinoDocument;
-                GH_Document GrasshopperDocument;
-                IGH_Component Component;
-                int Iteration;
+    #region HiddenMembers
+    RhinoDoc RhinoDocument;
+    GH_Document GrasshopperDocument;
+    IGH_Component Component;
+    int Iteration;
 
-                // VSCode インテリセンス用のダミー実装
-                public override void InvokeRunScript(IGH_Component owner,
-                                                    object rhinoDocument,
-                                                    int iteration,
-                                                    List<object> inputs,
-                                                    IGH_DataAccess DA)
-                {
-                    throw new NotImplementedException();
-                }
-            #endregion
+    // VSCode インテリセンス用のダミー実装
+    public override void InvokeRunScript(IGH_Component owner,
+                                        object rhinoDocument,
+                                        int iteration,
+                                        List<object> inputs,
+                                        IGH_DataAccess DA)
+    {
+        throw new NotImplementedException();
+    }
+    #endregion
         ";
 
 
