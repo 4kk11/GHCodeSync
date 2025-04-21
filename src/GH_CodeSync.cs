@@ -12,8 +12,9 @@ using Grasshopper.GUI.Canvas;
 using Grasshopper.GUI;
 using System.Windows.Forms;
 using System.Reflection;
+using System.Xml.Linq;
 
-namespace GH_CodeSync
+namespace GH_CodeSyncce
 {
     /// <summary>
     /// VSCode-Grasshopper連携プラグイン
@@ -29,6 +30,27 @@ namespace GH_CodeSync
         private const int PORT = 8080;
 
         private const string BUTTON_NAME = "VSCode Sync";
+
+
+        private static readonly string HiddenMembersRegion = @"
+            #region HiddenMembers
+                RhinoDoc RhinoDocument;
+                GH_Document GrasshopperDocument;
+                IGH_Component Component;
+                int Iteration;
+
+                // VSCode インテリセンス用のダミー実装
+                public override void InvokeRunScript(IGH_Component owner,
+                                                    object rhinoDocument,
+                                                    int iteration,
+                                                    List<object> inputs,
+                                                    IGH_DataAccess DA)
+                {
+                    throw new NotImplementedException();
+                }
+            #endregion
+        ";
+
 
         /// <summary>
         /// プラグインのロード時に呼び出されるメソッド
@@ -140,17 +162,48 @@ namespace GH_CodeSync
                         // 一時ディレクトリ準備
                         var tempDir = Path.Combine(Path.GetTempPath(), "gh-codesync");
                         Directory.CreateDirectory(tempDir);
+
+                        string rhinoDll   = typeof(RhinoApp).Assembly.Location;                  // RhinoCommon.dll の実パス
+                        string ghDll      = typeof(Grasshopper.Instances).Assembly.Location;     // Grasshopper.dll の実パス
+                        string csprojPath = Path.Combine(tempDir, "gh_component.csproj");
+
+                        var csproj = new XDocument(
+                            new XElement("Project",
+                                new XAttribute("Sdk", "Microsoft.NET.Sdk"),
+                                new XElement("PropertyGroup",
+                                    new XElement("TargetFramework", "net48"),
+                                    new XElement("LangVersion", "latest"),
+                                    new XElement("AllowUnsafeBlocks", "true")
+                                ),
+                                new XElement("ItemGroup",
+                                    new XElement("Reference",
+                                        new XAttribute("Include", "RhinoCommon"),
+                                        new XElement("HintPath", rhinoDll)
+                                    ),
+                                    new XElement("Reference",
+                                        new XAttribute("Include", "Grasshopper"),
+                                        new XElement("HintPath", ghDll)
+                                    )
+                                ),
+                                new XElement("ItemGroup",
+                                    new XElement("Compile", new XAttribute("Include", "*.cs"))
+                                )
+                            )
+                        );
+                        csproj.Save(csprojPath);
+
                         
                         // ソースコードを一時ファイルに保存
                         var tempFile = Path.Combine(tempDir, $"{guid}.cs");
-                        File.WriteAllText(tempFile, sourceCode ?? "// Empty component");
+                        var wrapped = InjectForVSCode(sourceCode ?? "// Empty", guid);
+                        File.WriteAllText(tempFile, wrapped ?? "// Empty component");
 
                         // WebSocket接続用のconnect.cmdファイルを作成
                         var connectScript = $@"{{""command"": ""vscode-grasshopper.connect"", ""guid"": ""{guid}""}}";
                         File.WriteAllText(Path.Combine(tempDir, "connect.cmd"), connectScript);
                         
                         // OSに依存しないURLスキーム起動方法
-                        var url = $"vscode://file/{tempFile.Replace(" ", "%20")}?target={guid}&language={language}";
+                        var url = $"vscode://file/{tempDir.Replace(" ", "%20")}";
                         var psi = new System.Diagnostics.ProcessStartInfo
                         {
                             FileName = url,
@@ -188,6 +241,55 @@ namespace GH_CodeSync
                 return canvasToolbar.Items.OfType<ToolStripButton>().FirstOrDefault(b => b.Text == name);
             }
             return null;
+        }
+
+        private static string WrapWithNamespace(string code, string guid)
+        {
+            // 1) 末尾にある using ブロックを探す
+            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            int insertAt = -1;
+            for (int i = 0; i < lines.Length; i++)
+                if (lines[i].TrimStart().StartsWith("using "))
+                    insertAt = i;
+
+            // 2) GUID → 識別子 OK な文字に（ハイフンを _ に）
+            string ns = $"GH_Scripts_{guid.Replace('-', '_')}";
+
+            var sb = new System.Text.StringBuilder();
+
+            // 3) using 群をそのままコピー
+            for (int i = 0; i <= insertAt; i++)
+                sb.AppendLine(lines[i]);
+
+            // 4) file‑scoped namespace (C# 10) なら波括弧不要でインデントも維持しやすい
+            sb.AppendLine($"namespace {ns};");
+            sb.AppendLine();                // 空行
+
+            // 5) using ブロックより後ろをコピー
+            for (int i = insertAt + 1; i < lines.Length; i++)
+                sb.AppendLine(lines[i]);
+
+            return sb.ToString();
+        }
+
+        private static string InjectForVSCode(string rawCode, string guid)
+        {
+            // ① 名前空間ラップ
+            string code = WrapWithNamespace(rawCode, guid);
+
+            // ② Script_Instance クラス直後に HiddenMembers を差し込む
+            //    - ‘{’ の直後へインデント付きで挿入
+            const string classMarker = "public class Script_Instance";
+            int idx = code.IndexOf(classMarker, StringComparison.Ordinal);
+            if (idx >= 0)
+            {
+                int brace = code.IndexOf('{', idx);
+                if (brace > 0)
+                {
+                    code = code.Insert(brace + 1, HiddenMembersRegion);
+                }
+            }
+            return code;
         }
     }
 
@@ -261,7 +363,8 @@ namespace GH_CodeSync
             {
                 try
                 {
-                    UpdateScriptComponent(targetGuid, code);
+                    var cleaned = StripIdeHelpers(code);
+                    UpdateScriptComponent(targetGuid, cleaned);
                 }
                 catch (Exception ex)
                 {
@@ -399,6 +502,49 @@ namespace GH_CodeSync
         protected override void OnError(WebSocketSharp.ErrorEventArgs e)
         {
             RhinoApp.WriteLine($"WebSocket error: {e.Message}");
+        }
+
+        // ---------- ヘルパー ----------
+
+        /// VSCode から送られてきたコードを GH に適用する前に呼ぶ
+        private static string StripIdeHelpers(string code)
+        {
+            // ① HiddenMembers 領域を除去
+            code = RemoveRegion(code, "HiddenMembers");
+
+            // ② GUID 付き file‑scoped namespace を除去
+            code = RemoveGuidNamespace(code);
+
+            return code;
+        }
+
+        // #region X ～ #endregion を丸ごと削除
+        private static string RemoveRegion(string src, string regionName)
+        {
+            var sb = new System.Text.StringBuilder();
+            bool skip = false;
+            foreach (var line in src.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None))
+            {
+                var t = line.TrimStart();
+                if (t.StartsWith($"#region {regionName}"))
+                {
+                    skip = true; continue;
+                }
+                if (t.StartsWith("#endregion") && skip)
+                {
+                    skip = false; continue;
+                }
+                if (!skip) sb.AppendLine(line);
+            }
+            return sb.ToString();
+        }
+
+        // “namespace GH_Scripts_xxxxx;” 行を 1 行削除
+        private static string RemoveGuidNamespace(string src)
+        {
+            return string.Join(Environment.NewLine,
+                src.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None)
+                .Where(l => !l.TrimStart().StartsWith("namespace GH_Scripts_")));
         }
     }
 }
