@@ -165,6 +165,7 @@ namespace GH_CodeSyncce
 
                         string rhinoDll   = typeof(RhinoApp).Assembly.Location;                  // RhinoCommon.dll の実パス
                         string ghDll      = typeof(Grasshopper.Instances).Assembly.Location;     // Grasshopper.dll の実パス
+                        string ghioDll = typeof(GH_IO.Serialization.GH_Archive).Assembly.Location; // GH_IO.dll の実パス
                         string csprojPath = Path.Combine(tempDir, "gh_component.csproj");
 
                         var csproj = new XDocument(
@@ -176,13 +177,13 @@ namespace GH_CodeSyncce
                                     new XElement("AllowUnsafeBlocks", "true")
                                 ),
                                 new XElement("ItemGroup",
-                                    new XElement("Reference",
+                                    new XElement("PackageReference",
                                         new XAttribute("Include", "RhinoCommon"),
-                                        new XElement("HintPath", rhinoDll)
+                                        new XAttribute("Version", "8.18.25100.11001")
                                     ),
-                                    new XElement("Reference",
+                                    new XElement("PackageReference",
                                         new XAttribute("Include", "Grasshopper"),
-                                        new XElement("HintPath", ghDll)
+                                        new XAttribute("Version", "8.18.25100.11001")
                                     )
                                 ),
                                 new XElement("ItemGroup",
