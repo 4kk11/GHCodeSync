@@ -1,0 +1,152 @@
+using System;
+using WebSocketSharp;
+using WebSocketSharp.Server;
+using Rhino;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+
+namespace GH_CodeSyncce.Managers
+{
+    /// <summary>
+    /// WebSocketサーバーとクライアントとの通信を管理するクラス
+    /// </summary>
+    public class WebSocketManager
+    {
+        private WebSocketServer _server;
+        private const int PORT = 8080;
+        private readonly ScriptComponentManager _scriptManager;
+
+        public WebSocketManager(ScriptComponentManager scriptManager)
+        {
+            _scriptManager = scriptManager;
+        }
+
+        /// <summary>
+        /// WebSocketサーバーを起動
+        /// </summary>
+        public void StartServer()
+        {
+            try
+            {
+                _server = new WebSocketServer($"ws://localhost:{PORT}");
+                _server.AddWebSocketService<WebSocketMessageHandler>("/", () => new WebSocketMessageHandler(_scriptManager));
+                _server.Start();
+                RhinoApp.WriteLine($"WebSocket server started on ws://localhost:{PORT}");
+            }
+            catch (Exception ex)
+            {
+                RhinoApp.WriteLine($"Error starting WebSocket server: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// WebSocketサーバーを停止
+        /// </summary>
+        public void StopServer()
+        {
+            if (_server != null)
+            {
+                _server.Stop();
+                RhinoApp.WriteLine("WebSocket server stopped");
+            }
+        }
+    }
+
+    /// <summary>
+    /// WebSocketメッセージを処理するハンドラクラス
+    /// </summary>
+    public class WebSocketMessageHandler : WebSocketBehavior
+    {
+        private readonly ScriptComponentManager _scriptManager;
+
+        public WebSocketMessageHandler(ScriptComponentManager scriptManager)
+        {
+            _scriptManager = scriptManager;
+        }
+
+        protected override void OnMessage(MessageEventArgs e)
+        {
+            try
+            {
+                var message = JsonConvert.DeserializeObject<JObject>(e.Data);
+                var messageType = message["type"]?.ToString();
+                RhinoApp.WriteLine($"Received message: {e.Data}");
+
+                switch (messageType)
+                {
+                    case "setScript":
+                        HandleSetScript(message);
+                        break;
+                    default:
+                        RhinoApp.WriteLine($"Unknown message type: {messageType}");
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                RhinoApp.WriteLine($"Error handling message: {ex.Message}");
+                SendError($"Failed to process message: {ex.Message}");
+            }
+        }
+
+        private void HandleSetScript(JObject message)
+        {
+            var targetGuid = message["target"]?.ToString();
+            var code = message["code"]?.ToString();
+
+            if (string.IsNullOrEmpty(code))
+            {
+                SendError("Code content is empty");
+                return;
+            }
+
+            try
+            {
+                _scriptManager.UpdateScriptComponent(targetGuid, code, (success, error) =>
+                {
+                    if (success)
+                    {
+                        Send(JsonConvert.SerializeObject(new
+                        {
+                            type = "scriptUpdated",
+                            target = targetGuid,
+                            status = "success"
+                        }));
+                    }
+                    else
+                    {
+                        SendError(error);
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                SendError($"Failed to update script: {ex.Message}");
+            }
+        }
+
+        private void SendError(string message)
+        {
+            Send(JsonConvert.SerializeObject(new
+            {
+                type = "error",
+                message = message
+            }));
+        }
+
+        protected override void OnOpen()
+        {
+            RhinoApp.WriteLine("VSCode client connected");
+        }
+
+        protected override void OnClose(CloseEventArgs e)
+        {
+            RhinoApp.WriteLine("VSCode client disconnected");
+        }
+
+        protected override void OnError(ErrorEventArgs e)
+        {
+            RhinoApp.WriteLine($"WebSocket error: {e.Message}");
+        }
+    }
+}
