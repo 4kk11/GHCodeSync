@@ -4,7 +4,7 @@ using Grasshopper;
 using Grasshopper.Kernel;
 using Rhino;
 
-namespace GH_CodeSyncce.Managers
+namespace GHCodeSync.Managers
 {
     /// <summary>
     /// スクリプトコンポーネントの操作を管理するクラス

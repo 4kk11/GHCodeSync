@@ -1,16 +1,16 @@
 using System;
 using Rhino;
 using Grasshopper.Kernel;
-using GH_CodeSyncce.Managers;
+using GHCodeSync.Managers;
 
-namespace GH_CodeSyncce
+namespace GHCodeSync
 {
     /// <summary>
     /// VSCode-Grasshopper連携プラグイン
     /// - WebSocket通信を使用してVSCodeとGrasshopperのスクリプトコンポーネントを同期
     /// - スクリプトの双方向同期を実現
     /// </summary>
-    public class GH_CodeSync : GH_AssemblyPriority
+    public class GHCodeSync : GH_AssemblyPriority
     {
         private WebSocketManager _webSocketManager;
         private UIManager _uiManager;

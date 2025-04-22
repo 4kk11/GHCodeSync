@@ -7,7 +7,7 @@ using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using System.Diagnostics;
 
-namespace GH_CodeSyncce.Managers
+namespace GHCodeSync.Managers
 {
     /// <summary>
     /// GrasshopperのUI要素を管理するクラス

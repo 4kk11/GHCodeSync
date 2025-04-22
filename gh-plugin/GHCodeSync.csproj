@@ -18,7 +18,7 @@
     <!-- Specifies information for Assembly and Yak -->
     <Version>0.0.1</Version>
     <Title>VSCode Grasshopper Integration</Title>
-    <Company>GH_CodeSync Authors</Company>
+    <Company>GHCodeSync Authors</Company>
     <Description>VSCode と Grasshopper のスクリプトコンポーネントを連携するためのプラグイン</Description>
   </PropertyGroup>
   

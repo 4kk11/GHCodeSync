@@ -5,7 +5,7 @@ using Rhino;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace GH_CodeSyncce.Managers
+namespace GHCodeSync.Managers
 {
     /// <summary>
     /// WebSocketサーバーとクライアントとの通信を管理するクラス

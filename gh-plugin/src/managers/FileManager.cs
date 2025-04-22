@@ -5,7 +5,7 @@ using System.Reflection;
 using Grasshopper.Kernel;
 using Rhino;
 
-namespace GH_CodeSyncce.Managers
+namespace GHCodeSync.Managers
 {
     /// <summary>
     /// 一時ファイルの管理を担当するクラス
