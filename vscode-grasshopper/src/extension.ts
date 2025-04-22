@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as WebSocket from 'ws';
-
+import * as path from 'path';
+import * as fs   from 'fs';
 /**
  * GrasshopperClientクラス
  * Grasshopperとの WebSocket 通信を管理し、スクリプトの同期を行う
@@ -9,10 +10,6 @@ import * as WebSocket from 'ws';
  * - VSCode UI（ステータスバー等）の更新
  */
 class GrasshopperClient {
-    setComponentGuid(filePath: string, guid: string): void {
-        this.fileGuidMap.set(filePath, guid);
-        vscode.window.showInformationMessage(`ComponentのGUIDを設定しました: ${guid}`);
-    }
 
     /** WebSocket接続インスタンス */
     private socket: WebSocket | null = null;
@@ -20,8 +17,6 @@ class GrasshopperClient {
     private statusBarItem: vscode.StatusBarItem;
     /** 現在監視中のエディタ */
     private currentEditor?: vscode.TextEditor;
-    /** ファイルとコンポーネントGUIDの紐付け */
-    private fileGuidMap: Map<string, string> = new Map();
     /** 保存中フラグ（重複処理防止用） */
     private isSaving: boolean = false;
 
@@ -38,8 +33,10 @@ class GrasshopperClient {
     startEditorWatching(context: vscode.ExtensionContext): void {
         // アクティブエディタが変更された時の処理
         context.subscriptions.push(
-            vscode.window.onDidChangeActiveTextEditor(editor => {
-                this.handleEditorChange(editor);
+            vscode.window.onDidChangeActiveTextEditor(() => {
+                if (!this.socket) {
+                    this.connect();
+                }
             })
         );
 
@@ -51,50 +48,7 @@ class GrasshopperClient {
         );
 
         // 初期アクティブエディタの処理
-        this.handleEditorChange(vscode.window.activeTextEditor);
-    }
-
-    /**
-     * エディタ変更時の処理
-     * @param editor 新しいアクティブエディタ
-     */
-    private async handleEditorChange(editor?: vscode.TextEditor): Promise<void> {
-        this.currentEditor = editor;
-        if (editor && editor.document.languageId === 'csharp') {
-            const filePath = editor.document.uri.fsPath;
-            console.log('File Path:', filePath);
-
-            // ファイルパスから一時ディレクトリのパスを取得
-            const tempDir = filePath.substring(0, filePath.lastIndexOf('/'));
-            console.log('Temp Dir:', tempDir);
-
-            try {
-                // connect.cmdファイルを読み込む
-                const connectCmdPath = `${tempDir}/connect.cmd`;
-                const fs = require('fs');
-                if (fs.existsSync(connectCmdPath)) {
-                    const connectCmd = JSON.parse(fs.readFileSync(connectCmdPath, 'utf8'));
-                    console.log('Connect CMD:', connectCmd);
-
-                    if (connectCmd.guid && !this.fileGuidMap.has(filePath)) {
-                        // GUIDを設定して接続
-                        this.setComponentGuid(filePath, connectCmd.guid);
-                        this.connect();
-                    }
-                } else {
-                    // connect.cmdが見つからない場合は手動設定を提案
-                    if (!this.fileGuidMap.has(filePath)) {
-                        this.promptForComponentGuid();
-                    }
-                }
-            } catch (error) {
-                console.error('Error reading connect.cmd:', error);
-                // エラーの場合は手動設定を提案
-                if (!this.fileGuidMap.has(filePath)) {
-                    this.promptForComponentGuid();
-                }
-            }
-        }
+        this.connect();
     }
 
     /**
@@ -109,33 +63,15 @@ class GrasshopperClient {
         try {
             // C#ファイルの場合のみ処理
             if (document.languageId === 'csharp') {
-                const guid = this.fileGuidMap.get(document.uri.fsPath);
-                if (guid) {
-                    await this.sendScriptUpdate(guid, document.getText());
-                } else {
-                    // GUIDが未設定の場合は設定を提案
-                    await this.promptForComponentGuid();
-                }
+                // ファイルの名前 = GUID
+                const fileName = path.basename(document.fileName);
+                const guid = fileName.substring(0, fileName.lastIndexOf('.'));
+                await this.sendScriptUpdate(guid, document.getText());
             }
         } catch (error) {
             vscode.window.showErrorMessage(`スクリプトの更新に失敗しました: ${error}`);
         } finally {
             this.isSaving = false;
-        }
-    }
-
-    /**
-     * コンポーネントGUIDの入力を促す
-     */
-    private async promptForComponentGuid(): Promise<void> {
-        const guid = await vscode.window.showInputBox({
-            prompt: 'GrasshopperコンポーネントのGUIDを入力してください',
-            placeHolder: '例: 810aa6cf-cbff-4d78-bfed-5f899334ef72'
-        });
-
-        if (guid && this.currentEditor) {
-            this.fileGuidMap.set(this.currentEditor.document.uri.fsPath, guid);
-            vscode.window.showInformationMessage(`ComponentのGUIDを設定しました: ${guid}`);
         }
     }
 
@@ -268,6 +204,59 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(connectDisposable);
     context.subscriptions.push(disconnectDisposable);
     context.subscriptions.push(helthCheckDisposable);
+
+    const pattern = new vscode.RelativePattern(vscode.workspace.workspaceFolders![0], '**/*.cmd');
+    const folderWatcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, true);
+
+    folderWatcher.onDidChange(async (uri) => {
+        vscode.window.showInformationMessage(`ファイルが変更されました: ${uri.fsPath}`);
+        console.log('File changed:', uri.fsPath);
+
+        try {
+            const connectCmd = getConnectCmd(uri.fsPath);
+            if (!connectCmd) throw new Error('connect.cmd not found');
+
+            // .cs ファイル
+            const csPath = path.join(path.dirname(uri.fsPath), `${connectCmd.guid}.cs`);
+            if (!fs.existsSync(csPath)) throw new Error(`C# file not found: ${csPath}`);
+
+            // ① ドキュメントを開く
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(csPath));
+      
+            // ② エディタ（新しいタブ）で表示
+            await vscode.window.showTextDocument(doc, {
+              preview: false,                 // プレビューではなく固定タブ
+              viewColumn: vscode.ViewColumn.Active
+            });
+      
+          } catch (err) {
+            // まれに「まだ書き込み中で開けない」ケースがあるので
+            // 必要ならリトライ処理を挟む
+            console.error('Failed to open new file:', err);
+          }
+    });
+}
+
+
+/**
+ * connect.cmdファイルからフィールドを取得するヘルパー関数
+ */
+interface ConnectCmd {
+    command: string;
+    guid: string;
+}
+
+function getConnectCmd(filePath: string): ConnectCmd | null {
+    if (!filePath) throw new Error('filePath is required');
+    if (!fs.existsSync(filePath)) return null;
+
+    const connectCmd = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+    if (!connectCmd) throw new Error('connect.cmd is empty or invalid');
+    if (!connectCmd.command) throw new Error('command is required');
+    if (!connectCmd.guid) throw new Error('guid is required');
+
+    return connectCmd;
 }
 
 /**
