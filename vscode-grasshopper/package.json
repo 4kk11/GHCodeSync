@@ -10,7 +10,7 @@
         "Other"
     ],
     "activationEvents": [
-        "workspaceContains:**/*.cmd",
+        "workspaceContains:**/connect.cmd",
         "onCommand:vscode-grasshopper.connect",
         "onCommand:vscode-grasshopper.disconnect",
         "onCommand:vscode-grasshopper.healthCheck"
