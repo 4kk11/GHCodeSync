@@ -46,6 +46,20 @@ class GrasshopperClient {
                 this.handleDocumentSave(document);
             })
         );
+        
+        // connect.cmdファイルの監視
+        const pattern = new vscode.RelativePattern(vscode.workspace.workspaceFolders![0], '**/connect.cmd');
+        const folderWatcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, true);
+    
+        // FileSystemWatcherをsubscriptionsに追加
+        context.subscriptions.push(folderWatcher);
+
+        // onDidChangeのイベントリスナーをsubscriptionsに追加
+        context.subscriptions.push(
+            folderWatcher.onDidChange(async (uri) => {
+                this.handleCmdChanged(uri.fsPath)
+            })
+        );
 
         // 初期アクティブエディタの処理
         this.connect();
@@ -74,6 +88,35 @@ class GrasshopperClient {
             this.isSaving = false;
         }
     }
+
+    /**
+     * connect.cmdファイルの変更時の処理
+     * @param cmdPath 変更されたconnect.cmdファイルのパス
+     */
+    private async handleCmdChanged(cmdPath: string): Promise<void> {
+        try {
+            const connectCmd = getConnectCmd(cmdPath);
+            if (!connectCmd) throw new Error('connect.cmd not found');
+
+            // .cs ファイル
+            const csPath = path.join(path.dirname(cmdPath), `${connectCmd.guid}.cs`);
+            if (!fs.existsSync(csPath)) throw new Error(`C# file not found: ${csPath}`);
+
+            // ① ドキュメントを開く
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(csPath));
+      
+            // ② エディタ（新しいタブ）で表示
+            await vscode.window.showTextDocument(doc, {
+              preview: false,                 // プレビューではなく固定タブ
+              viewColumn: vscode.ViewColumn.Active
+            });
+        } catch (err) {
+            // まれに「まだ書き込み中で開けない」ケースがあるので
+            // 必要ならリトライ処理を挟む
+            console.error('Failed to open new file:', err);
+        }
+    }
+
 
     /**
      * Grasshopper（WebSocketサーバー）への接続を開始
@@ -204,37 +247,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(connectDisposable);
     context.subscriptions.push(disconnectDisposable);
     context.subscriptions.push(helthCheckDisposable);
-
-    const pattern = new vscode.RelativePattern(vscode.workspace.workspaceFolders![0], '**/*.cmd');
-    const folderWatcher = vscode.workspace.createFileSystemWatcher(pattern, false, false, true);
-
-    folderWatcher.onDidChange(async (uri) => {
-        vscode.window.showInformationMessage(`ファイルが変更されました: ${uri.fsPath}`);
-        console.log('File changed:', uri.fsPath);
-
-        try {
-            const connectCmd = getConnectCmd(uri.fsPath);
-            if (!connectCmd) throw new Error('connect.cmd not found');
-
-            // .cs ファイル
-            const csPath = path.join(path.dirname(uri.fsPath), `${connectCmd.guid}.cs`);
-            if (!fs.existsSync(csPath)) throw new Error(`C# file not found: ${csPath}`);
-
-            // ① ドキュメントを開く
-            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(csPath));
-      
-            // ② エディタ（新しいタブ）で表示
-            await vscode.window.showTextDocument(doc, {
-              preview: false,                 // プレビューではなく固定タブ
-              viewColumn: vscode.ViewColumn.Active
-            });
-      
-          } catch (err) {
-            // まれに「まだ書き込み中で開けない」ケースがあるので
-            // 必要ならリトライ処理を挟む
-            console.error('Failed to open new file:', err);
-          }
-    });
 }
 
 
