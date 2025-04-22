@@ -32,14 +32,13 @@ namespace GH_CodeSyncce
         private const string BUTTON_NAME = "VSCode Sync";
 
 
-        private static readonly string HiddenMembersRegion = @"
-    #region HiddenMembers
+        private static readonly string DummyMembersRegion = @"
+    #region DummyMembers
+    // Dummy implementation for VSCode IntelliSense (not touch this region)
     RhinoDoc RhinoDocument;
     GH_Document GrasshopperDocument;
     IGH_Component Component;
     int Iteration;
-
-    // VSCode インテリセンス用のダミー実装
     public override void InvokeRunScript(IGH_Component owner,
                                         object rhinoDocument,
                                         int iteration,
@@ -48,6 +47,10 @@ namespace GH_CodeSyncce
     {
         throw new NotImplementedException();
     }
+    private void Print(string text) { throw new NotImplementedException(); }
+    private void Print(string format, params object[] args) { throw new NotImplementedException(); }
+    private void Reflect(object obj) { throw new NotImplementedException(); }
+    private void Reflect(object obj, string method_name) { throw new NotImplementedException(); }
     #endregion
         ";
 
@@ -278,7 +281,7 @@ namespace GH_CodeSyncce
             // ① 名前空間ラップ
             string code = WrapWithNamespace(rawCode, guid);
 
-            // ② Script_Instance クラス直後に HiddenMembers を差し込む
+            // ② Script_Instance クラス直後に DummyMembers を差し込む
             //    - ‘{’ の直後へインデント付きで挿入
             const string classMarker = "public class Script_Instance";
             int idx = code.IndexOf(classMarker, StringComparison.Ordinal);
@@ -287,7 +290,7 @@ namespace GH_CodeSyncce
                 int brace = code.IndexOf('{', idx);
                 if (brace > 0)
                 {
-                    code = code.Insert(brace + 1, HiddenMembersRegion);
+                    code = code.Insert(brace + 1, DummyMembersRegion);
                 }
             }
             return code;
@@ -510,8 +513,8 @@ namespace GH_CodeSyncce
         /// VSCode から送られてきたコードを GH に適用する前に呼ぶ
         private static string StripIdeHelpers(string code)
         {
-            // ① HiddenMembers 領域を除去
-            code = RemoveRegion(code, "HiddenMembers");
+            // ① DummyMembers 領域を除去
+            code = RemoveRegion(code, "DummyMembers");
 
             // ② GUID 付き file‑scoped namespace を除去
             code = RemoveGuidNamespace(code);
