@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { GrasshopperClient } from './GrasshopperClient';
-import { UIManager } from './managers/UIManager';
-import { EditorManager } from './managers/EditorManager';
-import { FileSystemManager } from './managers/FileSystemManager';
+import { GrasshopperClient } from './grasshopper-client';
+import { UIManager } from './managers/ui-manager';
+import { EditorManager } from './managers/editor-manager';
+import { FileSystemManager } from './managers/file-system-manager';
 
 let client: GrasshopperClient;
 let uiManager: UIManager;

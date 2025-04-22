@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { GrasshopperClient } from '../GrasshopperClient';
+import { GrasshopperClient } from '../grasshopper-client';
 import * as path from 'path';
 
 /**

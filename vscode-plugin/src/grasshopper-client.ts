@@ -1,5 +1,5 @@
 import * as WebSocket from 'ws';
-import { UIManager } from './managers/UIManager';
+import { UIManager } from './managers/ui-manager';
 
 /**
  * GrasshopperClientクラス
