@@ -32,7 +32,8 @@ namespace GHCodeSync
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
                 _webSocketManager?.StopServer();
-                RhinoApp.WriteLine("VSCode-Grasshopper Integration Plugin: WebSocket server stopped");
+                _fileManager?.CleanupFiles();
+                RhinoApp.WriteLine("VSCode-Grasshopper Integration Plugin: Cleanup completed");
             };
 
             return GH_LoadingInstruction.Proceed;

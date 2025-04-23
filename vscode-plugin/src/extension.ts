@@ -50,4 +50,7 @@ export function deactivate() {
     if (client) {
         client.disconnect();
     }
+    if (fileSystemManager) {
+        fileSystemManager.cleanup();
+    }
 }

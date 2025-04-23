@@ -70,4 +70,19 @@ export class FileSystemManager {
 
         return connectCmd;
     }
+
+    /**
+     * 一時ファイルを全てクリーンアップ
+     */
+    cleanup(): void {
+        try {
+            const tempDir = path.join(require('os').tmpdir(), 'gh-codesync');
+            if (fs.existsSync(tempDir)) {
+                fs.rmSync(tempDir, { recursive: true, force: true });
+                console.log('Temporary files cleaned up successfully');
+            }
+        } catch (err) {
+            console.error('Failed to cleanup temporary files:', err);
+        }
+    }
 }

@@ -189,5 +189,25 @@ namespace GHCodeSync.Managers
 
             return sb.ToString();
         }
+        /// <summary>
+        /// 一時ファイルを全て削除
+        /// </summary>
+        public void CleanupFiles()
+        {
+            Console.WriteLine("Cleaning up temporary files...");
+            try
+            {
+                var tempDir = Path.Combine(Path.GetTempPath(), TEMP_DIR_NAME);
+                if (Directory.Exists(tempDir))
+                {
+                    Directory.Delete(tempDir, true);
+                    RhinoApp.WriteLine("Temporary files cleaned up successfully");
+                }
+            }
+            catch (Exception ex)
+            {
+                RhinoApp.WriteLine($"Error cleaning up temporary files: {ex.Message}");
+            }
+        }
     }
 }
