@@ -17,7 +17,6 @@ namespace GHCodeSync.Managers
     {
         private const string BUTTON_NAME = "VSCode Sync";
         private readonly FileManager _fileManager;
-
         public UIManager(FileManager fileManager)
         {
             _fileManager = fileManager;
@@ -64,8 +63,10 @@ namespace GHCodeSync.Managers
             ToolStrip canvasToolbar = GetCanvasToolbar();
             if (canvasToolbar != null)
             {
-                Image image = EmbeddedResourceHelpers.GetEmbeddedImage("logo_24x24.png");
-                ToolStripButton button = new ToolStripButton(BUTTON_NAME, image);
+                var button = new ToolStripButton();
+                button.Image = EmbeddedResourceHelpers.GetEmbeddedImage("logo_24x24.png");
+                button.Text = BUTTON_NAME;
+                button.ToolTipText = "Open with VSCode";
                 button.Click += HandleButtonClick;
                 canvasToolbar.Items.Add(button);
                 return true;
