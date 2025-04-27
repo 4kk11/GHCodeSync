@@ -29,6 +29,7 @@ namespace GHCodeSync.Managers
         private void Instances_CanvasCreated(GH_Canvas canvas)
         {
             Instances.CanvasCreated -= Instances_CanvasCreated;
+            this.AddToolStripSeparator();
             canvas.MouseDown += Canvas_MouseDown;
         }
 
@@ -72,6 +73,19 @@ namespace GHCodeSync.Managers
                 return true;
             }
             return false;
+        }
+
+        /// <summary>
+        /// ToolStripSeparetorを追加
+        /// 
+        private void AddToolStripSeparator()
+        {
+            ToolStrip canvasToolbar = GetCanvasToolbar();
+            if (canvasToolbar != null)
+            {
+                var separator = new ToolStripSeparator();
+                canvasToolbar.Items.Add(separator);
+            }
         }
 
         /// <summary>
