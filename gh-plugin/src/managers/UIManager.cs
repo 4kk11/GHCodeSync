@@ -6,6 +6,7 @@ using Grasshopper;
 using Grasshopper.GUI;
 using Grasshopper.GUI.Canvas;
 using System.Diagnostics;
+using System.Drawing;
 
 namespace GHCodeSync.Managers
 {
@@ -63,7 +64,8 @@ namespace GHCodeSync.Managers
             ToolStrip canvasToolbar = GetCanvasToolbar();
             if (canvasToolbar != null)
             {
-                ToolStripButton button = new ToolStripButton(BUTTON_NAME);
+                Image image = EmbeddedResourceHelpers.GetEmbeddedImage("logo_24x24.png");
+                ToolStripButton button = new ToolStripButton(BUTTON_NAME, image);
                 button.Click += HandleButtonClick;
                 canvasToolbar.Items.Add(button);
                 return true;
