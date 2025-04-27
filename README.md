@@ -1,5 +1,9 @@
 # GHCodeSync
 
+<div align="center">
+   <img src="art\logo.png" alt="Logo">
+</div>
+
 Grasshopperのスクリプトコンポーネント開発をVSCodeで行うための連携ツールです。WebSocketベースの双方向通信により、VSCodeの強力な開発支援機能をGrasshopperのスクリプト開発で活用できます。
 
 ## 概要
