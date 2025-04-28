@@ -24,7 +24,7 @@ namespace GHCodeSync
         public override string AuthorName => "GHCodeSync Authors";
 
         //Return a string representing your preferred contact details.
-        public override string AuthorContact => "https://github.com/yourusername/vscode-grasshopper";
+        public override string AuthorContact => "https://github.com/yourusername/GHCodeSync";
 
         public override string Version => "0.0.1";
 

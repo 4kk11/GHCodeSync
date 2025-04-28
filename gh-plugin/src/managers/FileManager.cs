@@ -75,7 +75,7 @@ namespace GHCodeSync.Managers
                 File.WriteAllText(sourceFile, wrappedCode);
 
                 // 接続用のコマンドファイルを作成
-                var connectScript = $@"{{""command"": ""vscode-grasshopper.connect"", ""guid"": ""{guid}""}}";
+                var connectScript = $@"{{""command"": ""GHCodeSync.connect"", ""guid"": ""{guid}""}}";
                 File.WriteAllText(Path.Combine(tempDir, "connect.cmd"), connectScript);
 
                 return new ComponentInfo

@@ -1,8 +1,8 @@
 {
-    "name": "vscode-grasshopper",
-    "displayName": "VSCode Grasshopper",
+    "name": "GHCodeSync",
+    "displayName": "GHCodeSync",
     "description": "VSCode extension for Grasshopper script component integration",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "engines": {
         "vscode": "^1.70.0"
     },
@@ -11,23 +11,23 @@
     ],
     "activationEvents": [
         "workspaceContains:**/connect.cmd",
-        "onCommand:vscode-grasshopper.connect",
-        "onCommand:vscode-grasshopper.disconnect",
-        "onCommand:vscode-grasshopper.healthCheck"
+        "onCommand:GHCodeSync.connect",
+        "onCommand:GHCodeSync.disconnect",
+        "onCommand:GHCodeSync.healthCheck"
     ],
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "vscode-grasshopper.connect",
+                "command": "GHCodeSync.connect",
                 "title": "Connect to Grasshopper"
             },
             {
-                "command": "vscode-grasshopper.disconnect",
+                "command": "GHCodeSync.disconnect",
                 "title": "Disconnect from Grasshopper"
             },
             {
-                "command": "vscode-grasshopper.healthCheck",
+                "command": "GHCodeSync.healthCheck",
                 "title": "Health Check"
             }
 
@@ -46,9 +46,9 @@
         "typescript": "^4.x.x",
         "ws": "^8.x.x"
     },
-    "publisher": "vscode-grasshopper",
+    "publisher": "4kk11",
     "repository": {
         "type": "git",
-        "url": "https://github.com/yourusername/vscode-grasshopper.git"
+        "url": "https://github.com/4kk11/GHCodeSync"
     }
 }

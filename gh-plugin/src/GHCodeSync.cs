@@ -6,7 +6,7 @@ using GHCodeSync.Managers;
 namespace GHCodeSync
 {
     /// <summary>
-    /// VSCode-Grasshopper連携プラグイン
+    /// GHCodeSync連携プラグイン
     /// - WebSocket通信を使用してVSCodeとGrasshopperのスクリプトコンポーネントを同期
     /// - スクリプトの双方向同期を実現
     /// </summary>
@@ -26,14 +26,14 @@ namespace GHCodeSync
         public override GH_LoadingInstruction PriorityLoad()
         {
             InitializeManagers();
-            RhinoApp.WriteLine("VSCode-Grasshopper Integration Plugin loaded");
+            RhinoApp.WriteLine("GHCodeSync Integration Plugin loaded");
 
             // アプリケーション終了時のクリーンアップ処理を登録
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
                 _webSocketManager?.StopServer();
                 _fileManager?.CleanupFiles();
-                RhinoApp.WriteLine("VSCode-Grasshopper Integration Plugin: Cleanup completed");
+                RhinoApp.WriteLine("GHCodeSync Integration Plugin: Cleanup completed");
             };
 
             return GH_LoadingInstruction.Proceed;
