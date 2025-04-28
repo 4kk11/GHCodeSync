@@ -16,7 +16,7 @@ if exist artifacts (
 
 REM =============================================
 REM csprojファイル内の <Version> タグの内容を抽出
-set "CSPROJ=..\gh-plugin\GHCodeSync.csproj"
+set "CSPROJ=..\GHCodeSync.csproj"
 set "VERSION="
 
 for /f "usebackq delims=" %%A in (`findstr /R "<Version>.*</Version>" "%CSPROJ%"`) do (
@@ -44,7 +44,7 @@ powershell -Command "(Get-Content -Raw 'manifest.yml') -replace '(?m)^version:.*
 
 REM =============================================
 REM dotnet でプロジェクトをビルド（成果物は artifacts\bin に出力）
-dotnet build -p:NoCopy=true ..\gh-plugin\GHCodeSync.csproj -c Release -o artifacts\bin
+dotnet build -p:NoCopy=true ..\GHCodeSync.csproj -c Release -o artifacts\bin
 if errorlevel 1 (
     echo ERROR: dotnet build failed.
     exit /b 1
