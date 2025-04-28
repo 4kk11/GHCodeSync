@@ -15,15 +15,14 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <!-- Specifies information for Assembly and Yak -->
-    <Version>0.0.1</Version>
+    <Version>0.0.1-Alpha.2</Version>
     <Title>VSCode Grasshopper Integration</Title>
     <Company>GHCodeSync Authors</Company>
     <Description>VSCode と Grasshopper のスクリプトコンポーネントを連携するためのプラグイン</Description>
   </PropertyGroup>
   
   <ItemGroup>
-    <PackageReference Include="Grasshopper" Version="8.0.23304.9001" ExcludeAssets="runtime" />
+    <PackageReference Include="Grasshopper" Version="8.18.25100.11001" ExcludeAssets="runtime" />
     <PackageReference Include="WebSocketSharp" Version="1.0.3-rc11" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
@@ -64,7 +63,8 @@
 		<ItemGroup>
 			<MySourceFiles Include="$(TargetDir)\**" />
 		</ItemGroup>
-		<Copy Condition="'$(NoCopy)' != true" SourceFiles="@(MySourceFiles)" DestinationFolder="$(MyDestinationFolder)\$(ProjectName)" />
+    <Copy SourceFiles="../art/logo.png" DestinationFolder="$(TargetDir)" />
+		<Copy SourceFiles="@(MySourceFiles)" DestinationFolder="$(MyDestinationFolder)\$(ProjectName)" />
 	</Target>
 
 </Project>

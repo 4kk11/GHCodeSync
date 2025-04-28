@@ -1,0 +1,11 @@
+---
+name: GHCodeSync
+version: 0.0.1-Alpha.2
+authors:
+- 4kk11
+description: A Grasshopper plugin for synchronizing code between Grasshopper and VSCode.
+url: https://github.com/4kk11/GHCodeSync
+keywords:
+- Grasshopper
+- VSCode
+icon: logo.png
