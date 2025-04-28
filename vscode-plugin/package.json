@@ -39,12 +39,14 @@
         "watch": "tsc -watch -p ./",
         "lint": "eslint src --ext ts"
     },
+    "dependencies": {
+        "ws": "^8.x.x"
+    },
     "devDependencies": {
         "@types/node": "^16.x.x",
         "@types/vscode": "^1.70.0",
         "@types/ws": "^8.x.x",
-        "typescript": "^4.x.x",
-        "ws": "^8.x.x"
+        "typescript": "^4.x.x"
     },
     "publisher": "4kk11",
     "repository": {
