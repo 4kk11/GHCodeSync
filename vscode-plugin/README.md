@@ -6,8 +6,11 @@
         </a>
     </div>
     <br>
-    <img src="images/logo.png" alt="Logo" width="128">
+    <img src="images/logo_128.png" alt="Logo" width="128">
 </div>
 
-GHCodeSync is a VSCode extension that enables you to edit Grasshopper's C# script components in VSCode. By utilizing WebSocket-based bidirectional communication, you can leverage VSCode's powerful development features for Grasshopper script development.
-For more details, please visit the [GitHub repository](https://github.com/4kk11/GHCodeSync).
+GHCodeSync is a VSCode extension that enables you to edit Grasshopper's C# script components in VSCode. By utilizing WebSocket-based bidirectional communication, you can leverage VSCode's powerful development features for Grasshopper script development.　　　
+
+> **Note**: This extension requires Grasshopper, a plugin for Rhinoceros 3D, to be installed on your system.　　　
+
+For more details, please visit the [GitHub repository](https://github.com/4kk11/GHCodeSync).　　　
