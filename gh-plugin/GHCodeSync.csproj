@@ -18,7 +18,7 @@
     <Version>0.0.1</Version>
     <Title>VSCode Grasshopper Integration</Title>
     <Company>GHCodeSync Authors</Company>
-    <Description>VSCode と Grasshopper のスクリプトコンポーネントを連携するためのプラグイン</Description>
+    <Description>A plugin for connecting VSCode and Grasshopper C# script components</Description>
   </PropertyGroup>
   
   <ItemGroup>
