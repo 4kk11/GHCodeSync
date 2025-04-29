@@ -66,7 +66,7 @@ namespace GHCodeSync.Managers
             {
                 var button = new ToolStripButton();
                 button.Image = EmbeddedResourceHelpers.GetEmbeddedImage("logo_24x24.png");
-                // button.Text = BUTTON_NAME;
+                button.Name = BUTTON_NAME;
                 button.ToolTipText = "Open with VSCode";
                 button.Click += HandleButtonClick;
                 canvasToolbar.Items.Add(button);
@@ -163,7 +163,7 @@ namespace GHCodeSync.Managers
             if (canvasToolbar != null)
             {
                 return canvasToolbar.Items.OfType<ToolStripButton>()
-                    .FirstOrDefault(b => b.Text == name);
+                    .FirstOrDefault(b => b.Name == name);
             }
             return null;
         }
