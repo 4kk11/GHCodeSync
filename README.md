@@ -1,8 +1,8 @@
 <div align="center">
     <h1>GHCodeSync</h1>
     <div>
-        <a href="https://marketplace.visualstudio.com/items?itemName=ghcodesync">
-            <img src="https://img.shields.io/visual-studio-marketplace/v/ghcodesync.svg?label=VSCode%20Marketplace&color=blue" alt="VSCode Marketplace">
+        <a href="https://marketplace.visualstudio.com/items?itemName=4kk11.GHCodeSync">
+            <img src="https://img.shields.io/visual-studio-marketplace/v/4kk11.GHCodeSync.svg?label=VSCode%20Marketplace&color=blue" alt="VSCode Marketplace">
         </a>
         <a href="https://www.food4rhino.com/en/app/ghcodesync">
             <img src="https://img.shields.io/badge/McNeel%20Packages-latest-blue" alt="McNeel Packages">
