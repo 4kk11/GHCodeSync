@@ -2,6 +2,7 @@
     "name": "GHCodeSync",
     "displayName": "GHCodeSync",
     "description": "VSCode extension for Grasshopper script component integration",
+    "icon": "images/icon_128.png",
     "version": "0.0.3",
     "engines": {
         "vscode": "^1.70.0"
