@@ -1,17 +1,22 @@
-# GHCodeSync
-
-[![VSCode Marketplace](https://img.shields.io/visual-studio-marketplace/v/ghcodesync.svg?label=VSCode%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=ghcodesync)
-[![McNeel Packages](https://img.shields.io/badge/McNeel%20Packages-latest-blue)](https://www.food4rhino.com/en/app/ghcodesync)
-
 <div align="center">
-   <img src="art\logo.png" alt="Logo" width="500">
+    <h1>GHCodeSync</h1>
+    <div>
+        <a href="https://marketplace.visualstudio.com/items?itemName=ghcodesync">
+            <img src="https://img.shields.io/visual-studio-marketplace/v/ghcodesync.svg?label=VSCode%20Marketplace&color=blue" alt="VSCode Marketplace">
+        </a>
+        <a href="https://www.food4rhino.com/en/app/ghcodesync">
+            <img src="https://img.shields.io/badge/McNeel%20Packages-latest-blue" alt="McNeel Packages">
+        </a>
+    </div>
+    <br>
+    <img src="art\logo.png" alt="Logo" width="400">
 </div>
 
-Grasshopperのスクリプトコンポーネント開発をVSCodeで行うための連携ツールです。WebSocketベースの双方向通信により、VSCodeの強力な開発支援機能をGrasshopperのスクリプト開発で活用できます。
-
 ## 概要
+GrasshopperのC#スクリプトコンポーネントのコーディングをVSCodeで行うための連携ツールです。   
+WebSocketベースの双方向通信により、VSCodeの強力な開発支援機能をGrasshopperのスクリプト開発で活用できます。
 
-本ツールは、Grasshopperの組み込みエディタの制限（基本的な自動補完のみ、AI支援機能なし、高度なコード分析ツールの不在など）を解決し、現代的な開発環境でのスクリプト開発を可能にします。VSCodeの強力な機能群を活用することで、より効率的で品質の高いパラメトリックデザインの開発を実現します。
+https://github.com/user-attachments/assets/22f60aaa-47c8-48e5-adde-4709fa11a6ea
 
 ## 使用方法
 
