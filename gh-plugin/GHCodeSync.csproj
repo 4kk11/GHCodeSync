@@ -15,7 +15,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>0.0.1-Alpha.3</Version>
+    <Version>0.0.1-Alpha.4</Version>
     <Title>VSCode Grasshopper Integration</Title>
     <Company>GHCodeSync Authors</Company>
     <Description>VSCode と Grasshopper のスクリプトコンポーネントを連携するためのプラグイン</Description>
