@@ -400,3 +400,4 @@ launchSettings.json
 .DS_Store
 lib
 *.vsix
+.vscode
