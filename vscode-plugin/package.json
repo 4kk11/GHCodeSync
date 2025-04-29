@@ -11,8 +11,7 @@
         "Other"
     ],
     "activationEvents": [
-        "workspaceContains:**/connect.cmd",
-        "onCommand:GHCodeSync.healthCheck"
+        "workspaceContains:**/connect.cmd"
     ],
     "main": "./out/extension.js",
     "contributes": {

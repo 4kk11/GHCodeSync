@@ -19,6 +19,9 @@ export function activate(context: vscode.ExtensionContext) {
     editorManager = new EditorManager(client);
     fileSystemManager = new FileSystemManager(editorManager);
 
+    // Grasshopperとの接続
+    client.ensureConnection();
+
     // 監視の開始
     editorManager.startWatching(context);
     fileSystemManager.startWatching(context);
