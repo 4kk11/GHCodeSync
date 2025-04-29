@@ -13,7 +13,7 @@ namespace GHCodeSync.Managers
     public class WebSocketManager
     {
         private WebSocketServer _server;
-        private const int PORT = 8080;
+        private const int PORT = 51234;
         private readonly ScriptComponentManager _scriptManager;
 
         public WebSocketManager(ScriptComponentManager scriptManager)

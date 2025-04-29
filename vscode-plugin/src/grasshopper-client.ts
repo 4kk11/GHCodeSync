@@ -7,6 +7,7 @@ import { UIManager } from './managers/ui-manager';
  */
 export class GrasshopperClient {
     private socket: WebSocket | null = null;
+    private port: number = 51234;
 
     constructor(
         private uiManager: UIManager
@@ -26,7 +27,7 @@ export class GrasshopperClient {
      */
     connect(): void {
         try {
-            this.socket = new WebSocket('ws://localhost:8080');
+            this.socket = new WebSocket(`ws://localhost:${this.port}`);
             
             this.socket.on('open', () => {
                 this.uiManager.updateStatusBar('Connected', '$(check)');
