@@ -15,7 +15,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>0.0.3</Version>
+    <Version>0.0.4</Version>
     <Title>VSCode Grasshopper Integration</Title>
     <Company>GHCodeSync Authors</Company>
     <Description>A plugin for connecting VSCode and Grasshopper C# script components</Description>
