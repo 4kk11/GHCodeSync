@@ -15,7 +15,7 @@
   </PropertyGroup>
   
   <PropertyGroup>
-    <Version>0.0.1</Version>
+    <Version>0.0.3</Version>
     <Title>VSCode Grasshopper Integration</Title>
     <Company>GHCodeSync Authors</Company>
     <Description>A plugin for connecting VSCode and Grasshopper C# script components</Description>
@@ -63,7 +63,7 @@
 		<ItemGroup>
 			<MySourceFiles Include="$(TargetDir)\**" />
 		</ItemGroup>
-    <Copy Condition="'$(NoCopy)' != true" SourceFiles="../art/logo.png" DestinationFolder="$(TargetDir)" />
+    <Copy SourceFiles="../art/logo.png" DestinationFolder="$(TargetDir)" />
 		<Copy Condition="'$(NoCopy)' != true" SourceFiles="@(MySourceFiles)" DestinationFolder="$(MyDestinationFolder)\$(ProjectName)" />
 	</Target>
 
