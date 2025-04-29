@@ -26,20 +26,10 @@ export function activate(context: vscode.ExtensionContext) {
     uiManager.showInfo('Grasshopper拡張機能がアクティブになりました');
 
     // コマンドの登録
-    let connectDisposable = vscode.commands.registerCommand('GHCodeSync.connect', () => {
-        client.connect();
-    });
-
-    let disconnectDisposable = vscode.commands.registerCommand('GHCodeSync.disconnect', () => {
-        client.disconnect();
-    });
-
     let healthCheckDisposable = vscode.commands.registerCommand('GHCodeSync.healthCheck', () => {
-        uiManager.showInfo('Grasshopperの状態を確認しました!');
+        client.healthCheck();
     });
 
-    context.subscriptions.push(connectDisposable);
-    context.subscriptions.push(disconnectDisposable);
     context.subscriptions.push(healthCheckDisposable);
 }
 

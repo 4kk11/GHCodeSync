@@ -12,26 +12,15 @@
     ],
     "activationEvents": [
         "workspaceContains:**/connect.cmd",
-        "onCommand:GHCodeSync.connect",
-        "onCommand:GHCodeSync.disconnect",
         "onCommand:GHCodeSync.healthCheck"
     ],
     "main": "./out/extension.js",
     "contributes": {
         "commands": [
             {
-                "command": "GHCodeSync.connect",
-                "title": "Connect to Grasshopper"
-            },
-            {
-                "command": "GHCodeSync.disconnect",
-                "title": "Disconnect from Grasshopper"
-            },
-            {
                 "command": "GHCodeSync.healthCheck",
-                "title": "Health Check"
+                "title": "GHCodeSync: Health Check"
             }
-
         ]
     },
     "scripts": {

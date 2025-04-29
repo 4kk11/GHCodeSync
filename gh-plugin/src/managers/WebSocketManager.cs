@@ -77,6 +77,13 @@ namespace GHCodeSync.Managers
                     case "setScript":
                         HandleSetScript(message);
                         break;
+                    case "healthCheck":
+                        Send(JsonConvert.SerializeObject(new
+                        {
+                            type = "healthCheck",
+                            status = "ok"
+                        }));
+                        break;
                     default:
                         RhinoApp.WriteLine($"Unknown message type: {messageType}");
                         break;

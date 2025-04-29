@@ -112,4 +112,26 @@ export class GrasshopperClient {
             }
         });
     }
+
+    /**
+     * Grasshopperの健康状態を確認
+     */
+    healthCheck(): void {
+        if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
+            this.uiManager.showError('Grasshopperに接続されていません');
+            return;
+        }
+
+        const message = {
+            type: 'healthCheck'
+        };
+
+        this.socket.send(JSON.stringify(message), (error) => {
+            if (error) {
+                this.uiManager.showError(`健康状態の確認に失敗: ${error}`);
+            } else {
+                this.uiManager.showInfo('Grasshopperの健康状態を確認しました');
+            }
+        });
+    }
 }
