@@ -7,9 +7,7 @@
         <a href="https://www.food4rhino.com/en/app/ghcodesync">
             <img src="https://img.shields.io/badge/Food4Rhino-latest-blue" alt="Food4Rhino">
         </a>
-
     </div>
-    <br>
 </div>
 
 GHCodeSync is a VSCode extension that enables you to edit Grasshopper's C# script components in VSCode. By utilizing WebSocket-based bidirectional communication, you can leverage VSCode's powerful development features for Grasshopper script development.　　　
