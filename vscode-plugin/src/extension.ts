@@ -26,7 +26,7 @@ export function activate(context: vscode.ExtensionContext) {
     editorManager.startWatching(context);
     fileSystemManager.startWatching(context);
 
-    uiManager.showInfo('Grasshopper拡張機能がアクティブになりました');
+    uiManager.showInfo('Grasshopper extension is now active');
 
     // コマンドの登録
     let healthCheckDisposable = vscode.commands.registerCommand('GHCodeSync.healthCheck', () => {

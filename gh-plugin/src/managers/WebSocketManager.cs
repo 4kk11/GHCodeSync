@@ -31,11 +31,11 @@ namespace GHCodeSync.Managers
                 _server = new WebSocketServer($"ws://localhost:{PORT}");
                 _server.AddWebSocketService<WebSocketMessageHandler>("/", () => new WebSocketMessageHandler(_scriptManager));
                 _server.Start();
-                RhinoApp.WriteLine($"WebSocket server started on ws://localhost:{PORT}");
+                RhinoApp.WriteLine($"GHCodeSync: WebSocket server started on ws://localhost:{PORT}");
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error starting WebSocket server: {ex.Message}");
+                RhinoApp.WriteLine($"GHCodeSync: Error starting WebSocket server: {ex.Message}");
             }
         }
 
@@ -47,7 +47,7 @@ namespace GHCodeSync.Managers
             if (_server != null)
             {
                 _server.Stop();
-                RhinoApp.WriteLine("WebSocket server stopped");
+                RhinoApp.WriteLine("GHCodeSync: WebSocket server stopped");
             }
         }
     }
@@ -70,7 +70,6 @@ namespace GHCodeSync.Managers
             {
                 var message = JsonConvert.DeserializeObject<JObject>(e.Data);
                 var messageType = message["type"]?.ToString();
-                RhinoApp.WriteLine($"Received message: {e.Data}");
 
                 switch (messageType)
                 {
@@ -85,13 +84,13 @@ namespace GHCodeSync.Managers
                         }));
                         break;
                     default:
-                        RhinoApp.WriteLine($"Unknown message type: {messageType}");
+                        RhinoApp.WriteLine($"GHCodeSync: Unknown message type: {messageType}");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error handling message: {ex.Message}");
+                RhinoApp.WriteLine($"GHCodeSync: Error handling message: {ex.Message}");
                 SendError($"Failed to process message: {ex.Message}");
             }
         }
@@ -143,17 +142,17 @@ namespace GHCodeSync.Managers
 
         protected override void OnOpen()
         {
-            RhinoApp.WriteLine("VSCode client connected");
+            RhinoApp.WriteLine("GHCodeSync: VSCode client connected");
         }
 
         protected override void OnClose(CloseEventArgs e)
         {
-            RhinoApp.WriteLine("VSCode client disconnected");
+            RhinoApp.WriteLine("GHCodeSync: VSCode client disconnected");
         }
 
         protected override void OnError(ErrorEventArgs e)
         {
-            RhinoApp.WriteLine($"WebSocket error: {e.Message}");
+            RhinoApp.WriteLine($"GHCodeSync: WebSocket error: {e.Message}");
         }
     }
 }

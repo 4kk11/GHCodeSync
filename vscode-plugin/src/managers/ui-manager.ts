@@ -8,7 +8,7 @@ export class UIManager {
 
     constructor() {
         this.statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-        this.updateStatusBar('未接続', '$(circle-slash)');
+        this.updateStatusBar('Disconnected', '$(circle-slash)');
     }
 
     /**

@@ -58,7 +58,7 @@ namespace GHCodeSync.Managers
                 var sourceCode = GetComponentSource(component);
                 if (string.IsNullOrEmpty(sourceCode))
                 {
-                    RhinoApp.WriteLine("Failed to get component source code");
+                    RhinoApp.WriteLine("GHCodeSync: Failed to get component source code");
                     return null;
                 }
 
@@ -87,7 +87,7 @@ namespace GHCodeSync.Managers
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error preparing component files: {ex.Message}");
+                RhinoApp.WriteLine($"GHCodeSync: Error preparing component files: {ex.Message}");
                 return null;
             }
         }
@@ -201,12 +201,12 @@ namespace GHCodeSync.Managers
                 if (Directory.Exists(tempDir))
                 {
                     Directory.Delete(tempDir, true);
-                    RhinoApp.WriteLine("Temporary files cleaned up successfully");
+                    RhinoApp.WriteLine("GHCodeSync: Temporary files cleaned up successfully");
                 }
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error cleaning up temporary files: {ex.Message}");
+                RhinoApp.WriteLine($"GHCodeSync: Error cleaning up temporary files: {ex.Message}");
             }
         }
     }

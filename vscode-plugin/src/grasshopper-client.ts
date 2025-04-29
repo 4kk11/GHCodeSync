@@ -29,8 +29,8 @@ export class GrasshopperClient {
             this.socket = new WebSocket('ws://localhost:8080');
             
             this.socket.on('open', () => {
-                this.uiManager.updateStatusBar('接続済み', '$(check)');
-                this.uiManager.showInfo('Grasshopperに接続しました');
+                this.uiManager.updateStatusBar('Connected', '$(check)');
+                this.uiManager.showInfo('Connected to Grasshopper');
             });
 
             this.socket.on('message', (data: WebSocket.RawData) => {
@@ -38,17 +38,17 @@ export class GrasshopperClient {
             });
 
             this.socket.on('error', (error: Error) => {
-                this.uiManager.showError(`接続エラー: ${error.message}`);
-                this.uiManager.updateStatusBar('エラー', '$(error)');
+                this.uiManager.showError(`Connection error: ${error.message}`);
+                this.uiManager.updateStatusBar('Error', '$(error)');
             });
 
             this.socket.on('close', () => {
-                this.uiManager.updateStatusBar('未接続', '$(circle-slash)');
-                this.uiManager.showInfo('Grasshopperから切断されました');
+                this.uiManager.updateStatusBar('Disconnected', '$(circle-slash)');
+                this.uiManager.showInfo('Disconnected from Grasshopper');
             });
         } catch (error) {
-            this.uiManager.showError(`接続エラー: ${error}`);
-            this.uiManager.updateStatusBar('エラー', '$(error)');
+            this.uiManager.showError(`Connection error: ${error}`);
+            this.uiManager.updateStatusBar('Error', '$(error)');
         }
     }
 
@@ -70,16 +70,16 @@ export class GrasshopperClient {
             const message = JSON.parse(data.toString());
             switch (message.type) {
                 case 'scriptUpdated':
-                    this.uiManager.showInfo('スクリプトが更新されました');
+                    this.uiManager.showInfo('Script has been updated');
                     break;
                 case 'error':
-                    this.uiManager.showError(`Grasshopperエラー: ${message.message}`);
+                    this.uiManager.showError(`Grasshopper error: ${message.message}`);
                     break;
                 default:
-                    console.log('未知のメッセージタイプ:', message.type);
+                    console.log('Unknown message type:', message.type);
             }
         } catch (error) {
-            console.error('メッセージの解析に失敗:', error);
+            console.error('Failed to parse message:', error);
         }
     }
 
@@ -88,7 +88,7 @@ export class GrasshopperClient {
      */
     async sendScriptUpdate(componentId: string, code: string): Promise<void> {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-            throw new Error('Grasshopperに接続されていません');
+            throw new Error('Not connected to Grasshopper');
         }
 
         const message = {
@@ -118,7 +118,7 @@ export class GrasshopperClient {
      */
     healthCheck(): void {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
-            this.uiManager.showError('Grasshopperに接続されていません');
+            this.uiManager.showError('Not connected to Grasshopper');
             return;
         }
 
@@ -128,9 +128,9 @@ export class GrasshopperClient {
 
         this.socket.send(JSON.stringify(message), (error) => {
             if (error) {
-                this.uiManager.showError(`健康状態の確認に失敗: ${error}`);
+                this.uiManager.showError(`Health check failed: ${error}`);
             } else {
-                this.uiManager.showInfo('Grasshopperの健康状態を確認しました');
+                this.uiManager.showInfo('Grasshopper health check completed');
             }
         });
     }

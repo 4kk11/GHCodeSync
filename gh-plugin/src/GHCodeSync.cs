@@ -26,14 +26,14 @@ namespace GHCodeSync
         public override GH_LoadingInstruction PriorityLoad()
         {
             InitializeManagers();
-            RhinoApp.WriteLine("GHCodeSync Integration Plugin loaded");
+            RhinoApp.WriteLine("GHCodeSync: Plugin loaded");
 
             // アプリケーション終了時のクリーンアップ処理を登録
             AppDomain.CurrentDomain.ProcessExit += (sender, e) =>
             {
                 _webSocketManager?.StopServer();
                 _fileManager?.CleanupFiles();
-                RhinoApp.WriteLine("GHCodeSync Integration Plugin: Cleanup completed");
+                RhinoApp.WriteLine("GHCodeSync: Cleanup completed");
             };
 
             return GH_LoadingInstruction.Proceed;
@@ -56,7 +56,7 @@ namespace GHCodeSync
             }
             catch (Exception ex)
             {
-                RhinoApp.WriteLine($"Error initializing managers: {ex.Message}");
+                RhinoApp.WriteLine($"GHCodeSync: Error initializing managers: {ex.Message}");
             }
         }
     }

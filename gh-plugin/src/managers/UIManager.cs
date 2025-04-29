@@ -142,7 +142,7 @@ namespace GHCodeSync.Managers
             }
             catch (Exception ex)
             {
-                Rhino.RhinoApp.WriteLine($"Error opening VSCode: {ex.Message}");
+                Rhino.RhinoApp.WriteLine($"GHCodeSync: Error opening VSCode: {ex.Message}");
             }
         }
 

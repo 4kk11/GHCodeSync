@@ -46,7 +46,7 @@ export class EditorManager {
                 await this.client.sendScriptUpdate(guid, document.getText());
             }
         } catch (error) {
-            vscode.window.showErrorMessage(`スクリプトの更新に失敗しました: ${error}`);
+            vscode.window.showErrorMessage(`Failed to update script: ${error}`);
         } finally {
             this.isSaving = false;
         }
