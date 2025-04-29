@@ -63,8 +63,8 @@
 		<ItemGroup>
 			<MySourceFiles Include="$(TargetDir)\**" />
 		</ItemGroup>
-    <Copy SourceFiles="../art/logo.png" DestinationFolder="$(TargetDir)" />
-		<Copy SourceFiles="@(MySourceFiles)" DestinationFolder="$(MyDestinationFolder)\$(ProjectName)" />
+    <Copy Condition="'$(NoCopy)' != true" SourceFiles="../art/logo.png" DestinationFolder="$(TargetDir)" />
+		<Copy Condition="'$(NoCopy)' != true" SourceFiles="@(MySourceFiles)" DestinationFolder="$(MyDestinationFolder)\$(ProjectName)" />
 	</Target>
 
 </Project>
