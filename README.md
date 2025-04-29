@@ -18,6 +18,11 @@ WebSocketベースの双方向通信により、VSCodeの強力な開発支援�
 
 https://github.com/user-attachments/assets/22f60aaa-47c8-48e5-adde-4709fa11a6ea
 
+## システム要件
+
+- Rhinoceros: 8.18.25100.11001 以降
+- VSCode: 1.70.0 以降
+
 ## 使用方法
 
 ### セットアップ手順
@@ -32,41 +37,6 @@ https://github.com/user-attachments/assets/22f60aaa-47c8-48e5-adde-4709fa11a6ea
    - VSCode上でスクリプトを編集
    - 保存（Ctrl+S）するとGrasshopperに自動で反映される
 
-
-## 開発者向け情報
-
-### ビルド方法
-
-#### VSCode拡張
-```bash
-cd vscode-plugin
-npm install
-npm run compile
-```
-
-#### Grasshopperプラグイン
-```bash
-cd gh-plugin
-dotnet build
-```
-
-### デバッグ方法
-
-1. VSCode拡張のデバッグ
-   - F5キーでデバッグ用のVSCodeインスタンスを起動
-   - 拡張機能のデバッグコンソールで通信ログを確認
-
-2. Grasshopperプラグインのデバッグ
-   - Visual StudioでGHCodeSync.slnを開く
-   - デバッグ設定：Rhinoのパスを指定
-   - デバッグ実行（F5）
-
-## 注意事項
-
-- Grasshopperのバージョン要件: 7.0以上
-- .NET Framework 4.8以上が必要
-- ファイアウォールでWebSocket通信（デフォルトポート:8080）が許可されていることを確認
-
 ## ライセンス
 
-MIT License
+このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルをご覧ください。
