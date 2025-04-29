@@ -1,5 +1,8 @@
 # GHCodeSync
 
+[![VSCode Marketplace](https://img.shields.io/visual-studio-marketplace/v/ghcodesync.svg?label=VSCode%20Marketplace&color=blue)](https://marketplace.visualstudio.com/items?itemName=ghcodesync)
+[![McNeel Packages](https://img.shields.io/badge/McNeel%20Packages-latest-blue)](https://www.food4rhino.com/en/app/ghcodesync)
+
 <div align="center">
    <img src="art\logo.png" alt="Logo" width="500">
 </div>
@@ -10,70 +13,20 @@ Grasshopperのスクリプトコンポーネント開発をVSCodeで行うため
 
 本ツールは、Grasshopperの組み込みエディタの制限（基本的な自動補完のみ、AI支援機能なし、高度なコード分析ツールの不在など）を解決し、現代的な開発環境でのスクリプト開発を可能にします。VSCodeの強力な機能群を活用することで、より効率的で品質の高いパラメトリックデザインの開発を実現します。
 
-## プロジェクト構成
-
-プロジェクトは以下のコンポーネントで構成されています：
-
-```mermaid
-graph TB
-    subgraph VSCode
-        A[VSCode Extension<br>TypeScript/Node.js]
-        B[WebSocket Client]
-        C[File System Watcher]
-    end
-
-    subgraph Grasshopper
-        D[GHCodeSync Plugin<br>C#]
-        E[WebSocket Server]
-        F[Script Component<br>Manager]
-    end
-
-    A --> B
-    A --> C
-    B <-->|WebSocket| E
-    D --> E
-    D --> F
-
-    classDef vscode fill:#007ACC,stroke:#333,stroke-width:2px,color:#fff;
-    classDef gh fill:#B5CC18,stroke:#333,stroke-width:2px,color:#fff;
-
-    class A,B,C vscode;
-    class D,E,F gh;
-```
-
-## インストール
-
-### VSCode拡張
-```bash
-code --install-extension ghcodesync-*.vsix
-```
-
-### Grasshopperプラグイン
-1. `GHCodeSync.gha`をGrasshopper Componentsフォルダにコピー
-   - Windows: `%AppData%\Grasshopper\Libraries`
-   - macOS: `/Users/[ユーザー名]/Library/Application Support/Grasshopper/Libraries`
-2. Rhinocerosを再起動
-
 ## 使用方法
 
-1. VSCodeでGrasshopper拡張を有効化
-   ```
-   Cmd/Ctrl + Shift + P > GHCodeSync: Connect to Grasshopper
-   ```
+### セットアップ手順
 
-2. 接続状態の確認
-   - VSCodeのステータスバーに接続状態が表示されます
-   - 緑色のチェックマーク: 接続済み
-   - 赤色のX: 未接続
+1. **プラグインのインストール**
+   - VSCode拡張: Visual Studio Code MarketPlaceから「GHCodeSync」をインストール
+   - Grasshopperプラグイン: McNeel Packagesから「GHCodeSync」をインストール
 
-3. スクリプトの編集
-   - 対象のC#スクリプトコンポーネントを選択
-   - VSCodeで編集
-   - 保存時に自動的にGrasshopperへ反映
+2. **スクリプト編集**
+   - Grasshopper上でC#スクリプトコンポーネントを選択
+   - ツールバーから「Open with VSCode」ボタンをクリック
+   - VSCode上でスクリプトを編集
+   - 保存（Ctrl+S）するとGrasshopperに自動で反映される
 
-4. エラー表示
-   - コンパイルエラー: 問題パネルに表示
-   - 実行時エラー: 出力パネルに表示
 
 ## 開発者向け情報
 
