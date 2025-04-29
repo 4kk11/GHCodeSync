@@ -33,7 +33,17 @@ export function activate(context: vscode.ExtensionContext) {
         client.healthCheck();
     });
 
+    let connectDisposable = vscode.commands.registerCommand('GHCodeSync.connect', () => {
+        client.connect();
+    });
+
+    let disconnectDisposable = vscode.commands.registerCommand('GHCodeSync.disconnect', () => {
+        client.disconnect();
+    });
+
     context.subscriptions.push(healthCheckDisposable);
+    context.subscriptions.push(connectDisposable);
+    context.subscriptions.push(disconnectDisposable);
 }
 
 /**

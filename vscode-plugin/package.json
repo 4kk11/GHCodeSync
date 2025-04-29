@@ -19,6 +19,14 @@
             {
                 "command": "GHCodeSync.healthCheck",
                 "title": "GHCodeSync: Health Check"
+            },
+            {
+                "command": "GHCodeSync.connect",
+                "title": "GHCodeSync: Connect to Grasshopper"
+            },
+            {
+                "command": "GHCodeSync.disconnect",
+                "title": "GHCodeSync: Disconnect from Grasshopper"
             }
         ]
     },
