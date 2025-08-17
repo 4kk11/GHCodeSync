@@ -58,6 +58,9 @@ namespace GHCodeSync.Managers
                 var connectScript = $@"{{""command"": ""GHCodeSync.connect"", ""guid"": ""{guid}""}}";
                 File.WriteAllText(Path.Combine(tempDir, "connect.cmd"), connectScript);
 
+                // CLAUDE.mdファイルを作成
+                CreateClaudeMarkdown(tempDir);
+
                 return new ComponentInfo
                 {
                     Guid = guid,
@@ -154,6 +157,66 @@ namespace GHCodeSync.Managers
                 )
             );
             csproj.Save(Path.Combine(directory, "gh_component.csproj"));
+        }
+
+        /// <summary>
+        /// CLAUDE.mdファイルを作成
+        /// </summary>
+        private void CreateClaudeMarkdown(string directory)
+        {
+            var claudeContent = @"# Grasshopper C# Script Component Development
+
+## 概要
+この一時ディレクトリはGrasshopperのC#スクリプトコンポーネント開発用です。VSCodeで編集したコードは自動的にGrasshopperのC#スクリプトコンポーネントに送信され、リアルタイムで反映されます。
+
+## ファイル構成
+- `*.cs` - C#スクリプトコンポーネントのソースコード
+- `gh_component.csproj` - NuGet参照を含むVisual Studioプロジェクトファイル
+- `connect.cmd` - 接続用コマンドファイル
+- `CLAUDE.md` - このファイル（開発ガイド）
+
+## 仕組み
+1. VSCodeでC#ファイルを編集・保存
+2. VSCode拡張がファイル変更を検知
+3. コードがWebSocket経由でGrasshopperプラグインに送信
+4. GrasshopperのC#スクリプトコンポーネントにコードが反映
+5. Grasshopperのドキュメントが自動更新
+
+## 許可された編集
+以下の編集のみが許可されています：
+- **usingセクション**: 名前空間のインポート
+- **NuGetセンテンス**: パッケージ参照（詳細は下記参照）
+- **RunScript関数の引数**: 入力パラメータの定義
+- **RunScript関数の実装**: メインロジックの実装
+- **新しい関数の実装**: ヘルパー関数やメソッド
+- **新しいクラスの実装**: 補助クラスや構造体
+
+## 重要な制約
+⚠️ **許可された編集以外は行わないでください**
+⚠️ **一つの.csファイルが一つのC#スクリプトコンポーネントに対応します**
+⚠️ **すべての実装は一つの.csファイル内に収める必要があります**
+⚠️ **クラスや関数を別ファイルに定義することは許可されていません**
+
+## NuGetパッケージの使用方法
+NuGetパッケージを使用する場合は、以下の形式でコメントアウトとして記述してください：
+
+```csharp
+// #r ""nuget: RestSharp, 106.11.7""
+// #r ""nuget: Newtonsoft.Json""  // バージョン省略可能
+```
+
+ファイルを保存すると：
+1. 自動的に.csprojファイルにPackageReferenceが追加されます
+2. コメントアウトが削除されてGrasshopperのC#スクリプトコンポーネントに反映されます
+
+## 開発のベストプラクティス
+- IntelliSenseを活用してコーディング効率を向上させてください
+- NuGetパッケージは必要最小限に留めてください
+- コードは可読性を重視して記述してください
+- 複雑なロジックは適切に関数分割してください
+- コメントを適切に追加して、コードの意図を明確にしてください
+";
+            File.WriteAllText(Path.Combine(directory, "CLAUDE.md"), claudeContent);
         }
 
         /// <summary>
