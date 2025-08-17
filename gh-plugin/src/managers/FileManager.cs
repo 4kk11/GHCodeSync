@@ -146,7 +146,7 @@ namespace GHCodeSync.Managers
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
                     new XElement("PropertyGroup",
-                        new XElement("TargetFramework", "net48"),
+                        new XElement("TargetFramework", "net7.0"),
                         new XElement("LangVersion", "latest"),
                         new XElement("AllowUnsafeBlocks", "true")
                     ),
@@ -166,55 +166,57 @@ namespace GHCodeSync.Managers
         {
             var claudeContent = @"# Grasshopper C# Script Component Development
 
-## 概要
-この一時ディレクトリはGrasshopperのC#スクリプトコンポーネント開発用です。VSCodeで編集したコードは自動的にGrasshopperのC#スクリプトコンポーネントに送信され、リアルタイムで反映されます。
+## Overview
+This temporary directory is for Grasshopper C# script component development. Code edited in VSCode is automatically sent to the Grasshopper C# script component and reflected in real-time.
 
-## ファイル構成
-- `*.cs` - C#スクリプトコンポーネントのソースコード
-- `gh_component.csproj` - NuGet参照を含むVisual Studioプロジェクトファイル
-- `connect.cmd` - 接続用コマンドファイル
-- `CLAUDE.md` - このファイル（開発ガイド）
+## File Structure
+- `*.cs` - C# script component source code
+- `gh_component.csproj` - Visual Studio project file containing NuGet references
+- `connect.cmd` - Connection command file
+- `CLAUDE.md` - This file (development guide)
 
-## 仕組み
-1. VSCodeでC#ファイルを編集・保存
-2. VSCode拡張がファイル変更を検知
-3. コードがWebSocket経由でGrasshopperプラグインに送信
-4. GrasshopperのC#スクリプトコンポーネントにコードが反映
-5. Grasshopperのドキュメントが自動更新
+## How It Works
+1. Edit and save C# files in VSCode
+2. VSCode extension detects file changes
+3. Code is sent to Grasshopper plugin via WebSocket
+4. Code is reflected in Grasshopper's C# script component
+5. Grasshopper document is automatically updated
 
-## 許可された編集
-以下の編集のみが許可されています：
-- **usingセクション**: 名前空間のインポート
-- **NuGetセンテンス**: パッケージ参照（詳細は下記参照）
-- **RunScript関数の引数**: 入力パラメータの定義
-- **RunScript関数の実装**: メインロジックの実装
-- **新しい関数の実装**: ヘルパー関数やメソッド
-- **新しいクラスの実装**: 補助クラスや構造体
+## Allowed Edits
+Only the following edits are permitted:
+- **using section**: Namespace imports
+- **NuGet statements**: Package references (see details below)
+- **RunScript function arguments**: Input parameter definitions
+- **RunScript function implementation**: Main logic implementation
+- **New function implementations**: Helper functions and methods
+- **New class implementations**: Supporting classes and structures
 
-## 重要な制約
-⚠️ **許可された編集以外は行わないでください**
-⚠️ **一つの.csファイルが一つのC#スクリプトコンポーネントに対応します**
-⚠️ **すべての実装は一つの.csファイル内に収める必要があります**
-⚠️ **クラスや関数を別ファイルに定義することは許可されていません**
+## Important Constraints
+⚠️ **Do not make edits other than those allowed**
+⚠️ **One .cs file corresponds to one C# script component**
+⚠️ **All implementation must be contained within a single .cs file**
+⚠️ **Defining classes or functions in separate files is not permitted**
 
-## NuGetパッケージの使用方法
-NuGetパッケージを使用する場合は、以下の形式でコメントアウトとして記述してください：
+## How to Use NuGet Packages
+When using NuGet packages, describe them as comments in the following format:
 
 ```csharp
 // #r ""nuget: RestSharp, 106.11.7""
-// #r ""nuget: Newtonsoft.Json""  // バージョン省略可能
+// #r ""nuget: Newtonsoft.Json""  // Version can be omitted
 ```
 
-ファイルを保存すると：
-1. 自動的に.csprojファイルにPackageReferenceが追加されます
-2. コメントアウトが削除されてGrasshopperのC#スクリプトコンポーネントに反映されます
+**Important**: Always use WebSearch to find the appropriate version of NuGet packages before using them.
 
-## 開発のベストプラクティス
-- IntelliSenseを活用してコーディング効率を向上させてください
-- NuGetパッケージは必要最小限に留めてください
-- コードは可読性を重視して記述してください
-- 複雑なロジックは適切に関数分割してください
-- コメントを適切に追加して、コードの意図を明確にしてください
+When you save the file:
+1. PackageReference is automatically added to the .csproj file
+2. Comments are removed and reflected in the Grasshopper C# script component
+
+## Development Best Practices
+- Utilize IntelliSense to improve coding efficiency
+- Keep NuGet packages to a minimum
+- Write code with emphasis on readability
+- Appropriately divide complex logic into functions
+- Add appropriate comments to clarify code intent
 ";
             File.WriteAllText(Path.Combine(directory, "CLAUDE.md"), claudeContent);
         }
