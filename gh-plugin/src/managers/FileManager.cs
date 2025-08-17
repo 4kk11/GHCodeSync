@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Xml.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino;
 
@@ -44,8 +46,8 @@ namespace GHCodeSync.Managers
                 var tempDir = Path.Combine(Path.GetTempPath(), TEMP_DIR_NAME);
                 Directory.CreateDirectory(tempDir);
 
-                // プロジェクトファイルを作成
-                CreateProjectFile(tempDir);
+                // プロジェクトファイルを作成（ソースコードからNuGet参照を抽出）
+                CreateProjectFile(tempDir, sourceCode);
 
                 // ソースコードファイルを作成
                 var wrappedCode = IdeCodeTransformer.InjectForVSCode(sourceCode, guid);
@@ -91,8 +93,52 @@ namespace GHCodeSync.Managers
         /// <summary>
         /// プロジェクトファイルを作成
         /// </summary>
-        private void CreateProjectFile(string directory)
+        private void CreateProjectFile(string directory, string sourceCode)
         {
+            // パッケージ参照を格納するリスト
+            var packageReferences = new List<XElement>
+            {
+                // デフォルトのパッケージ参照
+                new XElement("PackageReference",
+                    new XAttribute("Include", "RhinoCommon"),
+                    new XAttribute("Version", "8.18.25100.11001")
+                ),
+                new XElement("PackageReference",
+                    new XAttribute("Include", "Grasshopper"),
+                    new XAttribute("Version", "8.18.25100.11001")
+                )
+            };
+
+            // ソースコードから#r directivesを抽出
+            var nugetPattern = @"#r\s+""nuget:\s*([^,""]+)(?:\s*,\s*([^""]+))?""";
+            var matches = Regex.Matches(sourceCode, nugetPattern);
+
+            foreach (Match match in matches)
+            {
+                var packageName = match.Groups[1].Value.Trim();
+                var packageVersion = match.Groups[2].Success ? match.Groups[2].Value.Trim() : "*";
+
+                // 既存のパッケージでないか確認
+                bool exists = false;
+                foreach (var existingRef in packageReferences)
+                {
+                    if (existingRef.Attribute("Include")?.Value == packageName)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    var packageRef = new XElement("PackageReference",
+                        new XAttribute("Include", packageName),
+                        new XAttribute("Version", packageVersion)
+                    );
+                    packageReferences.Add(packageRef);
+                }
+            }
+
             var csproj = new XDocument(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -101,16 +147,7 @@ namespace GHCodeSync.Managers
                         new XElement("LangVersion", "latest"),
                         new XElement("AllowUnsafeBlocks", "true")
                     ),
-                    new XElement("ItemGroup",
-                        new XElement("PackageReference",
-                            new XAttribute("Include", "RhinoCommon"),
-                            new XAttribute("Version", "8.18.25100.11001")
-                        ),
-                        new XElement("PackageReference",
-                            new XAttribute("Include", "Grasshopper"),
-                            new XAttribute("Version", "8.18.25100.11001")
-                        )
-                    ),
+                    new XElement("ItemGroup", packageReferences),
                     new XElement("ItemGroup",
                         new XElement("Compile", new XAttribute("Include", "*.cs"))
                     )
