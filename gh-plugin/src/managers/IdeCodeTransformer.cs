@@ -35,8 +35,11 @@ namespace GHCodeSync.Managers
         /// </summary>
         public static string InjectForVSCode(string rawCode, string guid)
         {
+            // #r ディレクティブをコメントアウト
+            string code = CommentOutReferenceDirectives(rawCode);
+
             // 名前空間を注入
-            string code = InjectNamespace(rawCode, guid);
+            code = InjectNamespace(code, guid);
 
             // DummyMembersの注入
             code = InjectDummyMembers(code);
@@ -54,6 +57,9 @@ namespace GHCodeSync.Managers
             
             // DummyMembersリージョンの除去
             code = RemoveRegion(code, "DummyMembers");
+
+            // コメントアウトされた#rディレクティブを復活
+            code = UncommentReferenceDirectives(code);
 
             return code;
         }
@@ -74,6 +80,56 @@ namespace GHCodeSync.Managers
                 }
             }
             return code;
+        }
+
+        /// <summary>
+        /// #r ディレクティブをコメントアウト
+        /// </summary>
+        private static string CommentOutReferenceDirectives(string code)
+        {
+            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            var result = new System.Text.StringBuilder();
+
+            foreach (var line in lines)
+            {
+                if (line.TrimStart().StartsWith("#r "))
+                {
+                    result.AppendLine("//" + line);
+                }
+                else
+                {
+                    result.AppendLine(line);
+                }
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// コメントアウトされた#r ディレクティブを復活
+        /// </summary>
+        private static string UncommentReferenceDirectives(string code)
+        {
+            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            var result = new System.Text.StringBuilder();
+
+            foreach (var line in lines)
+            {
+                var trimmed = line.TrimStart();
+                // //の後に任意の空白があってから#rが来るパターンに対応
+                if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, @"^//\s*#r\s"))
+                {
+                    // コメントを除去して元の行を復活
+                    var originalLine = System.Text.RegularExpressions.Regex.Replace(line, @"//\s*#r\s", "#r ");
+                    result.AppendLine(originalLine);
+                }
+                else
+                {
+                    result.AppendLine(line);
+                }
+            }
+
+            return result.ToString();
         }
 
         /// <summary>
