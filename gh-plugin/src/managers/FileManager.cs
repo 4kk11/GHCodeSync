@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Xml.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Collections.Generic;
 using Grasshopper.Kernel;
 using Rhino;
 
@@ -13,28 +15,6 @@ namespace GHCodeSync.Managers
     public class FileManager
     {
         private const string TEMP_DIR_NAME = "gh-codesync";
-
-        private static readonly string DummyMembersRegion = @"
-    #region DummyMembers
-    // Dummy implementation for VSCode IntelliSense (not touch this region)
-    RhinoDoc RhinoDocument;
-    GH_Document GrasshopperDocument;
-    IGH_Component Component;
-    int Iteration;
-    public override void InvokeRunScript(IGH_Component owner,
-                                        object rhinoDocument,
-                                        int iteration,
-                                        List<object> inputs,
-                                        IGH_DataAccess DA)
-    {
-        throw new NotImplementedException();
-    }
-    private void Print(string text) { throw new NotImplementedException(); }
-    private void Print(string format, params object[] args) { throw new NotImplementedException(); }
-    private void Reflect(object obj) { throw new NotImplementedException(); }
-    private void Reflect(object obj, string method_name) { throw new NotImplementedException(); }
-    #endregion
-        ";
 
         /// <summary>
         /// コンポーネントの情報を保持する構造体
@@ -66,17 +46,20 @@ namespace GHCodeSync.Managers
                 var tempDir = Path.Combine(Path.GetTempPath(), TEMP_DIR_NAME);
                 Directory.CreateDirectory(tempDir);
 
-                // プロジェクトファイルを作成
-                CreateProjectFile(tempDir);
+                // プロジェクトファイルを作成（ソースコードからNuGet参照を抽出）
+                CreateProjectFile(tempDir, sourceCode);
 
                 // ソースコードファイルを作成
-                var wrappedCode = InjectForVSCode(sourceCode, guid);
+                var wrappedCode = IdeCodeTransformer.InjectForVSCode(sourceCode, guid);
                 var sourceFile = Path.Combine(tempDir, $"{guid}.cs");
                 File.WriteAllText(sourceFile, wrappedCode);
 
                 // 接続用のコマンドファイルを作成
                 var connectScript = $@"{{""command"": ""GHCodeSync.connect"", ""guid"": ""{guid}""}}";
                 File.WriteAllText(Path.Combine(tempDir, "connect.cmd"), connectScript);
+
+                // CLAUDE.mdファイルを作成
+                CreateClaudeMarkdown(tempDir);
 
                 return new ComponentInfo
                 {
@@ -113,8 +96,52 @@ namespace GHCodeSync.Managers
         /// <summary>
         /// プロジェクトファイルを作成
         /// </summary>
-        private void CreateProjectFile(string directory)
+        private void CreateProjectFile(string directory, string sourceCode)
         {
+            // パッケージ参照を格納するリスト
+            var packageReferences = new List<XElement>
+            {
+                // デフォルトのパッケージ参照
+                new XElement("PackageReference",
+                    new XAttribute("Include", "RhinoCommon"),
+                    new XAttribute("Version", "8.18.25100.11001")
+                ),
+                new XElement("PackageReference",
+                    new XAttribute("Include", "Grasshopper"),
+                    new XAttribute("Version", "8.18.25100.11001")
+                )
+            };
+
+            // ソースコードから#r directivesを抽出
+            var nugetPattern = @"#r\s+""nuget:\s*([^,""]+)(?:\s*,\s*([^""]+))?""";
+            var matches = Regex.Matches(sourceCode, nugetPattern);
+
+            foreach (Match match in matches)
+            {
+                var packageName = match.Groups[1].Value.Trim();
+                var packageVersion = match.Groups[2].Success ? match.Groups[2].Value.Trim() : "*";
+
+                // 既存のパッケージでないか確認
+                bool exists = false;
+                foreach (var existingRef in packageReferences)
+                {
+                    if (existingRef.Attribute("Include")?.Value == packageName)
+                    {
+                        exists = true;
+                        break;
+                    }
+                }
+
+                if (!exists)
+                {
+                    var packageRef = new XElement("PackageReference",
+                        new XAttribute("Include", packageName),
+                        new XAttribute("Version", packageVersion)
+                    );
+                    packageReferences.Add(packageRef);
+                }
+            }
+
             var csproj = new XDocument(
                 new XElement("Project",
                     new XAttribute("Sdk", "Microsoft.NET.Sdk"),
@@ -123,16 +150,7 @@ namespace GHCodeSync.Managers
                         new XElement("LangVersion", "latest"),
                         new XElement("AllowUnsafeBlocks", "true")
                     ),
-                    new XElement("ItemGroup",
-                        new XElement("PackageReference",
-                            new XAttribute("Include", "RhinoCommon"),
-                            new XAttribute("Version", "8.18.25100.11001")
-                        ),
-                        new XElement("PackageReference",
-                            new XAttribute("Include", "Grasshopper"),
-                            new XAttribute("Version", "8.18.25100.11001")
-                        )
-                    ),
+                    new XElement("ItemGroup", packageReferences),
                     new XElement("ItemGroup",
                         new XElement("Compile", new XAttribute("Include", "*.cs"))
                     )
@@ -142,53 +160,65 @@ namespace GHCodeSync.Managers
         }
 
         /// <summary>
-        /// VSCode用のコード修正
+        /// CLAUDE.mdファイルを作成
         /// </summary>
-        private string InjectForVSCode(string rawCode, string guid)
+        private void CreateClaudeMarkdown(string directory)
         {
-            // 名前空間でラップ
-            string code = WrapWithNamespace(rawCode, guid);
+            var claudeContent = @"# Grasshopper C# Script Component Development
 
-            // DummyMembersの注入
-            const string classMarker = "public class Script_Instance";
-            int idx = code.IndexOf(classMarker, StringComparison.Ordinal);
-            if (idx >= 0)
-            {
-                int brace = code.IndexOf('{', idx);
-                if (brace > 0)
-                {
-                    code = code.Insert(brace + 1, DummyMembersRegion);
-                }
-            }
-            return code;
+## 概要
+この一時ディレクトリはGrasshopperのC#スクリプトコンポーネント開発用です。VSCodeで編集したコードは自動的にGrasshopperのC#スクリプトコンポーネントに送信され、リアルタイムで反映されます。
+
+## ファイル構成
+- `*.cs` - C#スクリプトコンポーネントのソースコード
+- `gh_component.csproj` - NuGet参照を含むVisual Studioプロジェクトファイル
+- `connect.cmd` - 接続用コマンドファイル
+- `CLAUDE.md` - このファイル（開発ガイド）
+
+## 仕組み
+1. VSCodeでC#ファイルを編集・保存
+2. VSCode拡張がファイル変更を検知
+3. コードがWebSocket経由でGrasshopperプラグインに送信
+4. GrasshopperのC#スクリプトコンポーネントにコードが反映
+5. Grasshopperのドキュメントが自動更新
+
+## 許可された編集
+以下の編集のみが許可されています：
+- **usingセクション**: 名前空間のインポート
+- **NuGetセンテンス**: パッケージ参照（詳細は下記参照）
+- **RunScript関数の引数**: 入力パラメータの定義
+- **RunScript関数の実装**: メインロジックの実装
+- **新しい関数の実装**: ヘルパー関数やメソッド
+- **新しいクラスの実装**: 補助クラスや構造体
+
+## 重要な制約
+⚠️ **許可された編集以外は行わないでください**
+⚠️ **一つの.csファイルが一つのC#スクリプトコンポーネントに対応します**
+⚠️ **すべての実装は一つの.csファイル内に収める必要があります**
+⚠️ **クラスや関数を別ファイルに定義することは許可されていません**
+
+## NuGetパッケージの使用方法
+NuGetパッケージを使用する場合は、以下の形式でコメントアウトとして記述してください：
+
+```csharp
+// #r ""nuget: RestSharp, 106.11.7""
+// #r ""nuget: Newtonsoft.Json""  // バージョン省略可能
+```
+
+ファイルを保存すると：
+1. 自動的に.csprojファイルにPackageReferenceが追加されます
+2. コメントアウトが削除されてGrasshopperのC#スクリプトコンポーネントに反映されます
+
+## 開発のベストプラクティス
+- IntelliSenseを活用してコーディング効率を向上させてください
+- NuGetパッケージは必要最小限に留めてください
+- コードは可読性を重視して記述してください
+- 複雑なロジックは適切に関数分割してください
+- コメントを適切に追加して、コードの意図を明確にしてください
+";
+            File.WriteAllText(Path.Combine(directory, "CLAUDE.md"), claudeContent);
         }
 
-        /// <summary>
-        /// 名前空間でコードをラップ
-        /// </summary>
-        private string WrapWithNamespace(string code, string guid)
-        {
-            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            int insertAt = -1;
-            for (int i = 0; i < lines.Length; i++)
-                if (lines[i].TrimStart().StartsWith("using "))
-                    insertAt = i;
-
-            string ns = $"GH_Scripts_{guid.Replace('-', '_')}";
-
-            var sb = new System.Text.StringBuilder();
-
-            for (int i = 0; i <= insertAt; i++)
-                sb.AppendLine(lines[i]);
-
-            sb.AppendLine($"namespace {ns};");
-            sb.AppendLine();
-
-            for (int i = insertAt + 1; i < lines.Length; i++)
-                sb.AppendLine(lines[i]);
-
-            return sb.ToString();
-        }
         /// <summary>
         /// 一時ファイルを全て削除
         /// </summary>
