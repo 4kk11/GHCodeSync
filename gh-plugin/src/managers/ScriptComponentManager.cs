@@ -23,7 +23,7 @@ namespace GHCodeSync.Managers
             {
                 try
                 {
-                    var cleaned = StripIdeHelpers(code);
+                    var cleaned = IdeCodeTransformer.StripIdeHelpers(code);
                     var success = UpdateComponent(targetGuid, cleaned);
                     if (success)
                     {
@@ -112,66 +112,5 @@ namespace GHCodeSync.Managers
             return updated;
         }
 
-        /// <summary>
-        /// IDE用のヘルパーコードを除去
-        /// </summary>
-        private static string StripIdeHelpers(string code)
-        {
-            // 名前空間の除去
-            code = RemoveGuidNamespace(code);
-            
-            // DummyMembersリージョンの除去
-            code = RemoveRegion(code, "DummyMembers");
-
-            return code;
-        }
-
-        /// <summary>
-        /// 特定のリージョンを除去
-        /// </summary>
-        private static string RemoveRegion(string src, string regionName)
-        {
-            if (string.IsNullOrEmpty(src)) return src;
-
-            var lines = src.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            var result = new System.Text.StringBuilder();
-            bool inRegion = false;
-
-            foreach (var line in lines)
-            {
-                if (line.TrimStart().StartsWith($"#region {regionName}"))
-                    inRegion = true;
-                else if (line.TrimStart().StartsWith("#endregion") && inRegion)
-                    inRegion = false;
-                else if (!inRegion)
-                    result.AppendLine(line);
-            }
-
-            return result.ToString();
-        }
-
-        /// <summary>
-        /// GUID名前空間を除去
-        /// </summary>
-        private static string RemoveGuidNamespace(string src)
-        {
-            if (string.IsNullOrEmpty(src)) return src;
-
-            var lines = src.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            var result = new System.Text.StringBuilder();
-            bool skipNext = false;
-
-            foreach (var line in lines)
-            {
-                if (line.TrimStart().StartsWith("namespace GH_Scripts_"))
-                    skipNext = true;
-                else if (skipNext && string.IsNullOrWhiteSpace(line))
-                    skipNext = false;
-                else if (!skipNext)
-                    result.AppendLine(line);
-            }
-
-            return result.ToString();
-        }
     }
 }

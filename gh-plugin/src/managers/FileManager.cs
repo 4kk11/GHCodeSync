@@ -14,28 +14,6 @@ namespace GHCodeSync.Managers
     {
         private const string TEMP_DIR_NAME = "gh-codesync";
 
-        private static readonly string DummyMembersRegion = @"
-    #region DummyMembers
-    // Dummy implementation for VSCode IntelliSense (not touch this region)
-    RhinoDoc RhinoDocument;
-    GH_Document GrasshopperDocument;
-    IGH_Component Component;
-    int Iteration;
-    public override void InvokeRunScript(IGH_Component owner,
-                                        object rhinoDocument,
-                                        int iteration,
-                                        List<object> inputs,
-                                        IGH_DataAccess DA)
-    {
-        throw new NotImplementedException();
-    }
-    private void Print(string text) { throw new NotImplementedException(); }
-    private void Print(string format, params object[] args) { throw new NotImplementedException(); }
-    private void Reflect(object obj) { throw new NotImplementedException(); }
-    private void Reflect(object obj, string method_name) { throw new NotImplementedException(); }
-    #endregion
-        ";
-
         /// <summary>
         /// コンポーネントの情報を保持する構造体
         /// </summary>
@@ -70,7 +48,7 @@ namespace GHCodeSync.Managers
                 CreateProjectFile(tempDir);
 
                 // ソースコードファイルを作成
-                var wrappedCode = InjectForVSCode(sourceCode, guid);
+                var wrappedCode = IdeCodeTransformer.InjectForVSCode(sourceCode, guid);
                 var sourceFile = Path.Combine(tempDir, $"{guid}.cs");
                 File.WriteAllText(sourceFile, wrappedCode);
 
@@ -141,54 +119,6 @@ namespace GHCodeSync.Managers
             csproj.Save(Path.Combine(directory, "gh_component.csproj"));
         }
 
-        /// <summary>
-        /// VSCode用のコード修正
-        /// </summary>
-        private string InjectForVSCode(string rawCode, string guid)
-        {
-            // 名前空間でラップ
-            string code = WrapWithNamespace(rawCode, guid);
-
-            // DummyMembersの注入
-            const string classMarker = "public class Script_Instance";
-            int idx = code.IndexOf(classMarker, StringComparison.Ordinal);
-            if (idx >= 0)
-            {
-                int brace = code.IndexOf('{', idx);
-                if (brace > 0)
-                {
-                    code = code.Insert(brace + 1, DummyMembersRegion);
-                }
-            }
-            return code;
-        }
-
-        /// <summary>
-        /// 名前空間でコードをラップ
-        /// </summary>
-        private string WrapWithNamespace(string code, string guid)
-        {
-            var lines = code.Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
-            int insertAt = -1;
-            for (int i = 0; i < lines.Length; i++)
-                if (lines[i].TrimStart().StartsWith("using "))
-                    insertAt = i;
-
-            string ns = $"GH_Scripts_{guid.Replace('-', '_')}";
-
-            var sb = new System.Text.StringBuilder();
-
-            for (int i = 0; i <= insertAt; i++)
-                sb.AppendLine(lines[i]);
-
-            sb.AppendLine($"namespace {ns};");
-            sb.AppendLine();
-
-            for (int i = insertAt + 1; i < lines.Length; i++)
-                sb.AppendLine(lines[i]);
-
-            return sb.ToString();
-        }
         /// <summary>
         /// 一時ファイルを全て削除
         /// </summary>
