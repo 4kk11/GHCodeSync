@@ -27,6 +27,7 @@ namespace GHCodeSync.Managers
     private void Print(string format, params object[] args) { throw new NotImplementedException(); }
     private void Reflect(object obj) { throw new NotImplementedException(); }
     private void Reflect(object obj, string method_name) { throw new NotImplementedException(); }
+    private void AddRuntimeMessage(GH_RuntimeMessageLevel level, string text) { throw new NotImplementedException(); }
     #endregion
         ";
 
