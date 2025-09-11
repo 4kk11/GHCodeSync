@@ -174,6 +174,7 @@ This temporary directory is for Grasshopper C# script component development. Cod
 - `gh_component.csproj` - Visual Studio project file containing NuGet references
 - `connect.cmd` - Connection command file
 - `CLAUDE.md` - This file (development guide)
+- `AGENTS.md` - Same content as CLAUDE.md (development guide)
 
 ## How It Works
 1. Edit and save C# files in VSCode
@@ -219,6 +220,7 @@ When you save the file:
 - Add appropriate comments to clarify code intent
 ";
             File.WriteAllText(Path.Combine(directory, "CLAUDE.md"), claudeContent);
+            File.WriteAllText(Path.Combine(directory, "AGENTS.md"), claudeContent);
         }
 
         /// <summary>
