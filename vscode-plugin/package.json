@@ -37,7 +37,7 @@
         "lint": "eslint src --ext ts"
     },
     "dependencies": {
-        "ws": "^8.x.x"
+        "ws": "^8.22.2"
     },
     "devDependencies": {
         "@types/node": "^16.x.x",
